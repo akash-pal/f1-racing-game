@@ -1,0 +1,122 @@
+import { useEffect, useRef, type RefObject } from 'react'
+import { useRapier, useBeforePhysicsStep, type RapierRigidBody } from '@react-three/rapier'
+import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
+import { useGameStore } from '../state/useGameStore'
+import { useInputStore } from '../state/useInputStore'
+import type { VehicleTuning } from '../lib/types'
+import {
+  applyVehicleControls,
+  setupVehicleController,
+  type VehicleStepState,
+} from './vehicleControls'
+
+// Wraps Rapier's DynamicRayCastVehicleController.
+//
+// The controller is created lazily inside the first physics step where the
+// chassis RigidBody ref is populated (a parent effect can run before the body
+// attaches). Teardown is a bare unmount effect.
+
+export function useRaycastVehicle(
+  chassisRef: RefObject<RapierRigidBody | null>,
+  tuning: VehicleTuning,
+): RefObject<DynamicRayCastVehicleController | null> {
+  const { world } = useRapier()
+  const controllerRef = useRef<DynamicRayCastVehicleController | null>(null)
+  const madeForWorld = useRef<object | null>(null)
+  const stepState = useRef<VehicleStepState>({ steer: 0 })
+  const tuningRef = useRef(tuning)
+  tuningRef.current = tuning
+
+  const ensureController = () => {
+    const chassis = chassisRef.current
+    if (!chassis) return null
+    if (controllerRef.current && madeForWorld.current === world) return controllerRef.current
+
+    const controller = world.createVehicleController(chassis)
+    setupVehicleController(controller, tuningRef.current)
+    controllerRef.current = controller
+    madeForWorld.current = world
+    return controller
+  }
+
+  const destroy = () => {
+    const c = controllerRef.current
+    if (c) {
+      try {
+        world.removeVehicleController(c)
+      } catch {
+        /* world already gone (HMR) */
+      }
+    }
+    controllerRef.current = null
+    madeForWorld.current = null
+    stepState.current.steer = 0
+  }
+
+  useEffect(() => destroy, [])
+
+  useBeforePhysicsStep(() => {
+    const controller = ensureController()
+    const chassis = chassisRef.current
+    if (!controller || !chassis) return
+    applyVehicleControls(
+      controller,
+      chassis,
+      useInputStore.getState(),
+      tuningRef.current,
+      useGameStore.getState().paused,
+      stepState.current,
+      world.timestep,
+    )
+  })
+
+  // --- headless test harness (dev only) ---
+  if (import.meta.env.DEV) {
+    const w = window as unknown as Record<string, unknown>
+    w.__vehHarness = {
+      get controller() {
+        return controllerRef.current
+      },
+      get chassis() {
+        return chassisRef.current
+      },
+      world,
+      /** run N control+physics steps with a fixed input; returns final chassis pos + speed */
+      drive(input: Partial<VehicleTuning> & Record<string, number | boolean>, steps = 60) {
+        const controller = ensureController()
+        const chassis = chassisRef.current
+        if (!controller || !chassis) return { error: 'no controller/chassis' }
+        const merged = {
+          throttle: 0,
+          brake: 0,
+          steer: 0,
+          handbrake: false,
+          ...(input as Record<string, number | boolean>),
+        }
+        let last
+        for (let i = 0; i < steps; i++) {
+          last = applyVehicleControls(
+            controller,
+            chassis,
+            merged as never,
+            tuningRef.current,
+            false,
+            stepState.current,
+            1 / 60,
+          )
+          world.step()
+        }
+        const p = chassis.translation()
+        const lv = chassis.linvel()
+        return {
+          pos: { x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2) },
+          speed: +Math.hypot(lv.x, lv.y, lv.z).toFixed(2),
+          contacts: [0, 1, 2, 3].map((i) => controller.wheelIsInContact(i)),
+          last,
+        }
+      },
+    }
+  }
+
+  return controllerRef
+}

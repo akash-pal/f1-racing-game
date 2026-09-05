@@ -1,0 +1,145 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  background: #0f1420;
+  color: #e8ecf1;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.app,
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- overlays --- */
+.overlay {
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+}
+.overlay--top-left {
+  top: 12px;
+  left: 12px;
+}
+.overlay--top-right {
+  top: 12px;
+  right: 12px;
+}
+.overlay--bottom-left {
+  bottom: 16px;
+  left: 16px;
+}
+.overlay button {
+  pointer-events: auto;
+}
+
+/* --- mode switcher --- */
+.mode-switcher {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(14, 20, 32, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+.mode-switcher button {
+  font: inherit;
+  font-size: 13px;
+  color: #cfd6de;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.mode-switcher button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.mode-switcher button.is-active {
+  color: #fff;
+  background: #2f6fd0;
+}
+.mode-switcher__reset {
+  color: #f0a35a;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* --- HUD --- */
+.hud {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hud__speed {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.hud__speed-value {
+  font-size: 54px;
+  font-weight: 700;
+  line-height: 1;
+}
+.hud__speed-unit {
+  font-size: 15px;
+  opacity: 0.7;
+}
+.hud__laps {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+.hud__laps strong {
+  font-size: 15px;
+}
+.hud__warn {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffce54;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+/* --- help --- */
+.help {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.7;
+  opacity: 0.7;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+kbd {
+  font: inherit;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
