@@ -43,6 +43,11 @@ export interface VehicleStepResult {
   vehSpeed: number
   steer: number
   wantReverse: boolean
+  tcsCut: number // 0..1 how much power TCS removed this step
+}
+
+export interface VehicleStepOpts {
+  tcs?: boolean
 }
 
 export function applyVehicleControls(
@@ -53,6 +58,7 @@ export function applyVehicleControls(
   paused: boolean,
   state: VehicleStepState,
   dt: number,
+  opts: VehicleStepOpts = {},
 ): VehicleStepResult {
   const t = tuning
   const n = controller.numWheels()
@@ -71,7 +77,14 @@ export function applyVehicleControls(
       controller.setWheelBrake(i, t.brakeForce)
     }
     controller.updateVehicle(dt)
-    return { forwardSpeed: 0, engineForce: 0, vehSpeed: 0, steer: state.steer, wantReverse: false }
+    return {
+      forwardSpeed: 0,
+      engineForce: 0,
+      vehSpeed: 0,
+      steer: state.steer,
+      wantReverse: false,
+      tcsCut: 0,
+    }
   }
 
   // forward speed (m/s) along chassis -Z
@@ -83,10 +96,21 @@ export function applyVehicleControls(
   const forwardSpeed = -(lv.x * fx + lv.y * fy + lv.z * fz)
 
   const wantReverse = input.brake > 0.05 && forwardSpeed < 0.6
-  const engineForce = wantReverse
+  let engineForce = wantReverse
     ? -input.brake * t.engineForce * 0.5
     : input.throttle * t.engineForce
   const footBrake = wantReverse ? 0 : input.brake * t.brakeForce
+
+  // traction / stability control: bleed power when the car is yawing hard under
+  // throttle (spinning up / sliding), and soften the launch.
+  let tcsCut = 0
+  if (opts.tcs && !wantReverse && input.throttle > 0.15 && !input.handbrake) {
+    const yawRate = Math.abs(chassis.angvel().y)
+    const yawCut = clamp((yawRate - 0.9) * 0.7, 0, 0.7)
+    const launchCut = Math.abs(forwardSpeed) < 5 ? 0.35 * (1 - Math.abs(forwardSpeed) / 5) : 0
+    tcsCut = Math.max(yawCut, launchCut)
+    engineForce *= 1 - tcsCut
+  }
 
   for (const i of REAR_WHEELS) controller.setWheelEngineForce(i, engineForce)
   for (const i of FRONT_WHEELS) controller.setWheelEngineForce(i, 0)
@@ -115,5 +139,6 @@ export function applyVehicleControls(
     vehSpeed: controller.currentVehicleSpeed(),
     steer: state.steer,
     wantReverse,
+    tcsCut,
   }
 }

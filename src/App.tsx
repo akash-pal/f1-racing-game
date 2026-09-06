@@ -2,18 +2,21 @@ import { Leva } from 'leva'
 import { Hud } from './app/Hud'
 import { ModeSwitcher } from './app/ModeSwitcher'
 import { useKeyboardInput } from './hooks/useKeyboardInput'
+import { useRaceControl } from './hooks/useRaceControl'
 import { useResetOnKey } from './hooks/useResetOnKey'
 import { Prototype2D } from './prototype2d/Prototype2D'
 import { Sandbox } from './sandbox/Sandbox'
 import { Game3D } from './game3d/Game3D'
 import { useGameStore } from './state/useGameStore'
 
-// Store-driven scene toggle. Input + reset hooks run here (outside any <Canvas>)
-// so they keep working across scene switches. Each scene owns its own <Canvas>.
+// Store-driven scene toggle. Input, hotkey and race-control hooks run here
+// (outside any <Canvas>) so they survive scene switches. Each scene owns its
+// own <Canvas>.
 
 export default function App() {
   useKeyboardInput()
   useResetOnKey()
+  useRaceControl()
   const mode = useGameStore((s) => s.mode)
 
   return (
@@ -28,10 +31,10 @@ export default function App() {
       <div className="overlay overlay--top-right">
         <div className="help">
           <div>
-            <kbd>W</kbd>/<kbd>↑</kbd> throttle · <kbd>S</kbd>/<kbd>↓</kbd> brake·reverse
+            <kbd>W</kbd>/<kbd>↑</kbd> gas · <kbd>S</kbd>/<kbd>↓</kbd> brake · <kbd>A</kbd>/<kbd>D</kbd>/mouse steer · <kbd>Space</kbd> handbrake
           </div>
           <div>
-            <kbd>A</kbd>/<kbd>D</kbd> steer · <kbd>Space</kbd> handbrake · <kbd>R</kbd> reset
+            <kbd>C</kbd> camera · <kbd>T</kbd> time · <kbd>L</kbd> line · <kbd>G</kbd> ghost · <kbd>K</kbd> TCS · <kbd>R</kbd> restart · <kbd>P</kbd> pause
           </div>
         </div>
       </div>

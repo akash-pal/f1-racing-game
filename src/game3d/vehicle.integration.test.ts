@@ -34,11 +34,12 @@ function makeRig() {
       .setTranslation(0, 1.0, 0)
       .setCanSleep(false)
       .setLinearDamping(0.15)
-      .setAngularDamping(0.6),
+      .setAngularDamping(0.9)
+      .enabledRotations(false, true, false),
   )
   world.createCollider(
-    RAPIER.ColliderDesc.cuboid(0.55, 0.28, 2.3)
-      .setTranslation(0, -0.05, 0.1)
+    RAPIER.ColliderDesc.cuboid(0.55, 0.3, 2.35)
+      .setTranslation(0, -0.02, 0.1)
       .setMass(DEFAULT_TUNING.chassisMass)
       .setFriction(0.7),
     chassis,

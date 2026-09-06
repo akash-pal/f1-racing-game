@@ -32,14 +32,14 @@ export function useVehicleTuning(): VehicleTuning {
       suspensionCompression: {
         value: DEFAULT_TUNING.suspensionCompression,
         min: 0.1,
-        max: 1.5,
-        step: 0.01,
+        max: 3,
+        step: 0.05,
       },
       suspensionRelaxation: {
         value: DEFAULT_TUNING.suspensionRelaxation,
         min: 0.1,
-        max: 1.5,
-        step: 0.01,
+        max: 3,
+        step: 0.05,
       },
       suspensionTravel: {
         value: DEFAULT_TUNING.suspensionTravel,
@@ -49,7 +49,7 @@ export function useVehicleTuning(): VehicleTuning {
       },
     }),
     grip: folder({
-      frictionSlip: { value: DEFAULT_TUNING.frictionSlip, min: 0.5, max: 4, step: 0.05 },
+      frictionSlip: { value: DEFAULT_TUNING.frictionSlip, min: 0.5, max: 5, step: 0.05 },
     }),
   })
 

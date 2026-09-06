@@ -34,18 +34,18 @@ export const STEER_SIGN = -1
 
 /** Default vehicle tuning (Phase 3). Overridable live via leva. */
 export const DEFAULT_TUNING: VehicleTuning = {
-  chassisMass: 820,
-  engineForce: 5600,
-  brakeForce: 2800,
-  handbrakeForce: 6500,
-  maxSteer: 0.5,
-  steerRate: 3.2,
-  suspensionRestLength: 0.32,
-  suspensionStiffness: 26,
-  suspensionCompression: 0.82,
-  suspensionRelaxation: 0.88,
-  suspensionTravel: 0.16,
-  frictionSlip: 1.7,
+  chassisMass: 800,
+  engineForce: 5400,
+  brakeForce: 2900,
+  handbrakeForce: 5200,
+  maxSteer: 0.42,
+  steerRate: 4.2,
+  suspensionRestLength: 0.3,
+  suspensionStiffness: 34,
+  suspensionCompression: 1.6, // heavy damping -> no bounce/wobble
+  suspensionRelaxation: 1.8,
+  suspensionTravel: 0.1,
+  frictionSlip: 2.1, // planted, less slide
   wheelRadius: 0.34,
 }
 

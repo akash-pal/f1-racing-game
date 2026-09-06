@@ -48,6 +48,15 @@ canvas {
   bottom: 16px;
   left: 16px;
 }
+.overlay--bottom-right {
+  bottom: 16px;
+  right: 16px;
+}
+.overlay--top-center {
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .overlay button {
   pointer-events: auto;
 }
@@ -106,14 +115,60 @@ canvas {
   font-size: 15px;
   opacity: 0.7;
 }
-.hud__laps {
-  font-size: 13px;
-  line-height: 1.5;
-  opacity: 0.85;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+.hud__cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.hud__laps strong {
-  font-size: 15px;
+.hud__gear {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+.hud__rpm {
+  width: 210px;
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+.hud__rpm-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #43d675 0%, #efe14a 62%, #e8402e 90%);
+  transition: width 0.08s linear;
+}
+.hud__pedals {
+  display: flex;
+  gap: 6px;
+}
+.hud__pedal {
+  width: 12px;
+  height: 46px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  position: relative;
+}
+.hud__pedal-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+.hud__pedal-fill--throttle {
+  background: #43d675;
+}
+.hud__pedal-fill--brake {
+  background: #e8402e;
 }
 .hud__warn {
   align-self: flex-start;
@@ -124,6 +179,112 @@ canvas {
   background: rgba(0, 0, 0, 0.45);
   padding: 3px 8px;
   border-radius: 5px;
+}
+
+/* --- timing panel + minimap --- */
+.hud-timing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+.hud-timing__lap {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.hud-timing__row {
+  display: flex;
+  gap: 10px;
+  opacity: 0.9;
+}
+.hud-timing__row span:first-child {
+  opacity: 0.55;
+  min-width: 34px;
+  text-align: left;
+}
+.hud-timing__row--best {
+  color: #b9a6ff;
+}
+.hud-timing__cur {
+  color: #fff;
+  font-weight: 700;
+}
+.hud__delta {
+  font-weight: 800;
+  font-size: 15px;
+  min-height: 18px;
+}
+.hud__delta.is-ahead {
+  color: #43d675;
+}
+.hud__delta.is-behind {
+  color: #ff6a5a;
+}
+.minimap {
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(10, 14, 22, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* --- chips (camera / time / assists) --- */
+.hud-chips {
+  display: flex;
+  gap: 6px;
+}
+.chip {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(10, 14, 22, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(4px);
+}
+.chip--on {
+  color: #0b0f16;
+  background: #7fd4a0;
+  border-color: transparent;
+}
+
+/* --- centre banner (GET READY / GO! / NEW RECORD) --- */
+.race-banner {
+  position: fixed;
+  top: 34%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  font-size: 46px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+.race-banner--go {
+  color: #43ff7d;
+  font-size: 84px;
+  animation: banner-pop 0.25s ease-out;
+}
+.race-banner--record {
+  color: #ffd24a;
+}
+@keyframes banner-pop {
+  from {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
 }
 
 /* --- help --- */

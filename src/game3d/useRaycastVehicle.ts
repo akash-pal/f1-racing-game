@@ -3,6 +3,7 @@ import { useRapier, useBeforePhysicsStep, type RapierRigidBody } from '@react-th
 import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import { useGameStore } from '../state/useGameStore'
 import { useInputStore } from '../state/useInputStore'
+import { raceGo } from '../hooks/useRaceControl'
 import type { VehicleTuning } from '../lib/types'
 import {
   applyVehicleControls,
@@ -59,14 +60,21 @@ export function useRaycastVehicle(
     const controller = ensureController()
     const chassis = chassisRef.current
     if (!controller || !chassis) return
+    const game = useGameStore.getState()
+    const input = useInputStore.getState()
+    // throttle is locked until the countdown finishes
+    const gated = raceGo()
+      ? input
+      : { throttle: 0, brake: input.brake, steer: input.steer, handbrake: true }
     applyVehicleControls(
       controller,
       chassis,
-      useInputStore.getState(),
+      gated,
       tuningRef.current,
-      useGameStore.getState().paused,
+      game.paused,
       stepState.current,
       world.timestep,
+      { tcs: game.assists.tcs },
     )
   })
 

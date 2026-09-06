@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { CatmullRomCurve3, TubeGeometry, Vector3 } from 'three'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+import { CatmullRomCurve3, Mesh, MeshStandardMaterial, TubeGeometry, Vector3, type Group } from 'three'
 
 // Low-poly F1 2026-concept car body, modelled after the reference USDZ:
 // long pointed nose, low multi-element front wing, raised tub, halo + airbox
@@ -12,9 +12,30 @@ interface Props {
   primary?: string
   accent?: string
   dark?: string
+  /** < 1 makes the whole car translucent (used by the ghost). */
+  opacity?: number
 }
 
-export function F1Car({ primary = '#1b3a7a', accent = '#33d1e0', dark = '#0f1622' }: Props) {
+export function F1Car({
+  primary = '#1b3a7a',
+  accent = '#33d1e0',
+  dark = '#0f1622',
+  opacity = 1,
+}: Props) {
+  const root = useRef<Group>(null)
+
+  useLayoutEffect(() => {
+    if (!root.current) return
+    root.current.traverse((o) => {
+      if (o instanceof Mesh && o.material instanceof MeshStandardMaterial) {
+        o.material.transparent = opacity < 1
+        o.material.opacity = opacity
+        o.material.depthWrite = opacity >= 1
+        o.castShadow = opacity >= 1
+      }
+    })
+  }, [opacity])
+
   // halo hoop: a tube arcing over the cockpit
   const haloGeo = useMemo(() => {
     const pts = [
@@ -28,7 +49,7 @@ export function F1Car({ primary = '#1b3a7a', accent = '#33d1e0', dark = '#0f1622
   }, [])
 
   return (
-    <group>
+    <group ref={root}>
       {/* ---------- floor / plank ---------- */}
       <mesh position={[0, -0.33, 0.15]} castShadow receiveShadow>
         <boxGeometry args={[1.5, 0.06, 4.4]} />

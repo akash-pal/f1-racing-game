@@ -8,7 +8,7 @@ export function Ground3D() {
       <CuboidCollider args={[600, 2, 600]} position={[0, -2, 0]} />
       <mesh position={[0, -2, 0]} receiveShadow>
         <boxGeometry args={[1200, 4, 1200]} />
-        <meshStandardMaterial color="#2c4522" roughness={1} />
+        <meshStandardMaterial color="#3f6130" roughness={1} />
       </mesh>
     </RigidBody>
   )

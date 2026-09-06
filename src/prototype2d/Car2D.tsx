@@ -2,12 +2,14 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import type { Group } from 'three'
 import { KMH_PER_MS } from '../lib/constants'
+import { pseudoGear } from '../lib/pseudoGear'
 import { spawn2D } from '../track/silverstone'
 import { F1Car } from '../car/F1Car'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { useGameStore } from '../state/useGameStore'
 import { useHudStore } from '../state/useHudStore'
 import { useInputStore } from '../state/useInputStore'
+import { useLiveStore } from '../state/useLiveStore'
 import type { ArcadeCarState } from '../lib/types'
 import { stepCar } from './arcadeModel'
 import { sampleTrack } from './trackBounds'
@@ -54,14 +56,30 @@ export function Car2D() {
       g.rotation.y = car.current.h
     }
 
-    lap.update(car.current.x, car.current.z, performance.now())
+    const now = performance.now()
+    lap.update(car.current.x, car.current.z, now)
+
+    useLiveStore.getState().set({
+      lapMs: lap.elapsed(now),
+      x: car.current.x,
+      z: car.current.z,
+      heading: car.current.h,
+      speedMs: Math.abs(car.current.v),
+    })
 
     hudAccum.current += dt
-    if (hudAccum.current >= 0.1) {
+    if (hudAccum.current >= 0.066) {
       hudAccum.current = 0
+      const speedKph = car.current.v * KMH_PER_MS
+      const g = pseudoGear(speedKph, car.current.v < -0.5)
       useHudStore.getState().set({
-        speedKph: car.current.v * KMH_PER_MS,
+        speedKph,
+        gearLabel: g.label,
+        rpm: g.rpm,
+        throttle: input.throttle,
+        brake: input.brake,
         offTrack: !onTrack,
+        currentLapMs: lap.elapsed(now),
       })
     }
   })

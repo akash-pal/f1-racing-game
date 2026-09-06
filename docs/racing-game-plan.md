@@ -91,6 +91,28 @@ record a demo GIF, link it from your GitHub profile.
 - [ ] Phase 6 — Cross-Platform Polish
 - [ ] Phase 7 — Deploy & Showcase
 
+### Gran Turismo-style feature pass (done)
+- **Stability fix**: chassis roll+pitch locked (`enabledRotations`), heavier
+  suspension damping, `additionalSolverIterations`, optional TCS — car no longer
+  wobbles/flips. Physics re-verified by the headless harness.
+- **4 camera views** (`CameraRig`): chase / cockpit / hood / overhead — cycle `C`.
+- **Time of day** (`lib/timeOfDay.ts` + `SkyDome`): dawn / midday / sunset / night
+  with drei `<Sky>`/`<Stars>` and a car-following key light — cycle `T`.
+- **Scenery** (`track/Scenery.tsx`): instanced pines, 4 grandstands with a
+  speckled crowd, advertising hoardings, tyre stacks — all placed from the curve.
+- **Start-light countdown** (`StartLights` + `useRaceControl`): 5-light gantry,
+  throttle locked until lights-out. `raceGo()` derives the state from a clock so
+  it's correct even if the tab was hidden during the lights.
+- **HUD** (`app/Hud.tsx`): gear + rpm bar + throttle/brake bars, live lap clock,
+  last/best, delta vs best (projected by track progress), GET READY / GO! / NEW
+  RECORD banner, camera/time/assist chips.
+- **Minimap** (`app/Minimap.tsx`): canvas inset, live car + ghost blips.
+- **Ghost car** (`car/ghost.ts` + `GhostCar`): records the best lap, replays a
+  translucent car in sync, persists to localStorage. Toggle `G`.
+- **Racing-line assist** (`track/RacingLine.tsx`): centre-line coloured
+  green→amber→red by upcoming curvature. Toggle `L`.
+- Hotkeys: `C` camera, `T` time, `L` line, `G` ghost, `K` TCS, `R` restart, `P` pause.
+
 ### Notes for next session
 - `npm run dev` then open the Browser pane; `npm test` runs vitest (22 tests).
 - Scene switch = `useGameStore.mode`: Sandbox / 2D / 3D (buttons top-left).
@@ -101,8 +123,12 @@ record a demo GIF, link it from your GitHub profile.
   `node --experimental-strip-types scripts/renderTrackSvg.ts /tmp/t.svg` dumps the layout.
 - Car model: `src/car/F1Car.tsx` — low-poly F1-2026 body (from the reference USDZ),
   used in both scenes; wheels are separate, driven by the Rapier vehicle controller.
-- Verified: geometry (no self-intersection), steering polarity (right = clockwise),
-  barriers contain the car, both scenes render. NOT yet verified live: a full timed lap,
-  chase-cam feel, mouse-steer feel (browser preview keeps auto-hiding — needs a human).
+- Verified via headless harness: car stays flat & upright under full-lock + full
+  throttle (no wobble/flip), steering polarity correct, straight-line true, gear/speed
+  HUD, countdown banner, scene renders (chase cam, car, track, grandstands, minimap).
+  NOT confirmed live (preview pane auto-hides → render loop freezes): camera-view feel,
+  time-of-day visuals, ghost replay, racing line, mouse-steer feel, a full timed lap.
+- Tests (30): arcade model, track geometry, headless Rapier vehicle, pseudoGear, countdown.
 - Tuning ideas: track width (`HALF_WIDTH`), barrier height (`Track3D` `WALL_HEIGHT`),
-  2D car scale (`Car2D` `CAR_SCALE`), light should follow the car for shadows on a big map.
+  2D car scale (`Car2D` `CAR_SCALE`), grandstand count/placement (`Scenery` `stands`),
+  vehicle feel via the leva panel or `DEFAULT_TUNING`.
