@@ -125,8 +125,8 @@ export function applyVehicleControls(
     for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, t.frictionSlip)
   }
 
-  // steering: rate-limited, reduced at speed, front only
-  const speedFactor = 1 / (1 + Math.abs(forwardSpeed) * 0.04)
+  // steering: rate-limited, gently reduced at speed (not numbed), front only
+  const speedFactor = 1 / (1 + Math.abs(forwardSpeed) * 0.02)
   const target = STEER_SIGN * clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
   state.steer = moveTowards(state.steer, target, t.steerRate * dt)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)

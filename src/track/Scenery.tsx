@@ -127,13 +127,11 @@ function Grandstand({
 
 // ---------- hoardings + tyre stacks ----------
 function TracksideProps() {
-  const { hoardings, tyreClusters } = useMemo(() => {
+  const { tyreClusters } = useMemo(() => {
     const t = getSilverstone()
     const n = t.samples.length
     const up = new Vector3(0, 1, 0)
-    const hb: { pos: [number, number, number]; yaw: number; c: string }[] = []
     const tc: [number, number, number][] = []
-    const colors = ['#d94f4f', '#3f7fd0', '#e5b93c', '#e8e8e8', '#39a85a']
 
     for (let i = 0; i < n; i += 7) {
       const p = t.samples[i]
@@ -142,20 +140,6 @@ function TracksideProps() {
       const a = t.tangents[i]
       const b = t.tangents[(i + 8) % n]
       const curv = Math.acos(Math.max(-1, Math.min(1, a.x * b.x + a.z * b.z)))
-      // hoardings on the straighter bits, both sides
-      if (curv < 0.06) {
-        for (const side of [1, -1]) {
-          hb.push({
-            pos: [
-              p.x + nrm.x * side * (t.halfWidth + 2.2),
-              0.9,
-              p.z + nrm.z * side * (t.halfWidth + 2.2),
-            ],
-            yaw: Math.atan2(tan.x, tan.z),
-            c: colors[(i / 7) % colors.length],
-          })
-        }
-      }
       // tyre stacks tucked on the inside of the tight corners
       if (curv > 0.22 && i % 21 === 0) {
         tc.push([
@@ -165,17 +149,11 @@ function TracksideProps() {
         ])
       }
     }
-    return { hoardings: hb, tyreClusters: tc }
+    return { tyreClusters: tc }
   }, [])
 
   return (
     <group>
-      {hoardings.map((h, i) => (
-        <mesh key={i} position={h.pos} rotation={[0, h.yaw, 0]} castShadow>
-          <boxGeometry args={[5.5, 1.1, 0.15]} />
-          <meshStandardMaterial color={h.c} roughness={0.6} />
-        </mesh>
-      ))}
       {tyreClusters.map((c, i) => (
         <group key={i} position={c}>
           {[
@@ -201,25 +179,35 @@ export function Scenery() {
     const t = getSilverstone()
     const n = t.samples.length
     const up = new Vector3(0, 1, 0)
-    // start/finish sample is index 0; place stands looking at the pit straight
-    // and a couple of corners
-    const idxs = [Math.round(n * 0.985), Math.round(n * 0.02), Math.round(n * 0.33), Math.round(n * 0.62)]
-    return idxs.map((i, k) => {
-      const ii = ((i % n) + n) % n
-      const p = t.samples[ii]
-      const tan = t.tangents[ii]
+    // place stands on the straighter parts, pushed far enough out that they
+    // never sit on the track (checked against the whole centre-line)
+    const specs: { frac: number; side: 1 | -1; width: number }[] = [
+      { frac: 0.015, side: 1, width: 48 }, // main grandstand, pit straight
+      { frac: 0.05, side: -1, width: 30 }, // opposite the pits
+      { frac: 0.2, side: 1, width: 34 }, // Hangar straight
+      { frac: 0.66, side: 1, width: 30 }, // Wellington return
+    ]
+    return specs.map((s) => {
+      const i = Math.round(s.frac * n) % n
+      const p = t.samples[i]
+      const tan = t.tangents[i]
       const nrm = new Vector3().crossVectors(up, tan).normalize()
-      const side = k === 1 ? -1 : 1
-      const dist = t.halfWidth + 14
+      // step outward until the stand front is well clear of every track leg
+      let dist = t.halfWidth + 12
+      for (let k = 0; k < 12; k++) {
+        const x = p.x + nrm.x * s.side * dist
+        const z = p.z + nrm.z * s.side * dist
+        if (t.sample(x, z).distToCenter > t.halfWidth + 9) break
+        dist += 6
+      }
       return {
-        position: [p.x + nrm.x * side * dist, 0, p.z + nrm.z * side * dist] as [
+        position: [p.x + nrm.x * s.side * dist, 0, p.z + nrm.z * s.side * dist] as [
           number,
           number,
           number,
         ],
-        // face back toward the track
-        yaw: Math.atan2(-nrm.x * side, -nrm.z * side),
-        width: k === 0 ? 46 : 30,
+        yaw: Math.atan2(-nrm.x * s.side, -nrm.z * s.side), // face the track
+        width: s.width,
       }
     })
   }, [])

@@ -18,8 +18,9 @@ interface Props {
 }
 
 const CHASE_OFFSET = new Vector3(0, 3.4, 8.2)
-const COCKPIT_OFFSET = new Vector3(0, 0.62, 0.45)
-const HOOD_OFFSET = new Vector3(0, 0.34, -1.05)
+// driver's-eye height: just above the cockpit rim, roughly where a helmet sits
+const COCKPIT_OFFSET = new Vector3(0, 0.46, 0.15)
+const HOOD_OFFSET = new Vector3(0, 0.36, -1.15)
 
 const yawQ = new Quaternion()
 const fullQ = new Quaternion()
@@ -101,11 +102,13 @@ export function CameraRig({ targetRef }: Props) {
     if (view === 'cockpit' || view === 'hood') {
       const off = view === 'cockpit' ? COCKPIT_OFFSET : HOOD_OFFSET
       desired.copy(off).applyQuaternion(fullQ).add(carPos)
-      follow(cam, desired, view === 'cockpit' ? 22 : 26, dt)
+      follow(cam, desired, view === 'cockpit' ? 24 : 28, dt)
+      // look well down the track (and a touch up) so you can read the corner
       fwd.set(0, 0, -1).applyQuaternion(fullQ)
-      look.copy(cam.position).addScaledVector(fwd, 12)
+      look.copy(cam.position).addScaledVector(fwd, 30)
+      look.y += 1.4
       cam.lookAt(look)
-      cam.fov = view === 'cockpit' ? 80 : 74
+      cam.fov = view === 'cockpit' ? 72 : 68
       cam.updateProjectionMatrix()
       return
     }

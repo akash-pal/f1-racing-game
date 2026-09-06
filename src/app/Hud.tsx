@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getSilverstone } from '../track/silverstone'
 import { countdownInfo, raceGo } from '../hooks/useRaceControl'
-import { TIME_OF_DAY } from '../lib/timeOfDay'
 import { useGameStore } from '../state/useGameStore'
 import { useHudStore } from '../state/useHudStore'
 import { useLiveStore } from '../state/useLiveStore'
@@ -20,7 +19,6 @@ const fmtDelta = (ms: number): string => `${ms >= 0 ? '+' : '-'}${(Math.abs(ms) 
 export function Hud() {
   const mode = useGameStore((s) => s.mode)
   const cameraView = useGameStore((s) => s.cameraView)
-  const timeOfDay = useGameStore((s) => s.timeOfDay)
   const assists = useGameStore((s) => s.assists)
 
   const speedKph = useHudStore((s) => s.speedKph)
@@ -139,10 +137,9 @@ export function Hud() {
       )}
 
       {is3D && (
-        <div className="overlay overlay--top-center">
+        <div className="overlay overlay--chips">
           <div className="hud-chips">
             <span className="chip">📷 {cameraView}</span>
-            <span className="chip">🕑 {TIME_OF_DAY[timeOfDay].label}</span>
             {assists.racingLine && <span className="chip chip--on">LINE</span>}
             {assists.tcs && <span className="chip chip--on">TCS</span>}
             {assists.ghost && <span className="chip chip--on">GHOST</span>}

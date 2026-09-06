@@ -1,12 +1,12 @@
 // Time-of-day presets: everything a scene needs to relight itself.
 
-export type TimeOfDay = 'dawn' | 'noon' | 'dusk' | 'night'
+export type TimeOfDay = 'morning' | 'noon' | 'afternoon' | 'sunset' | 'night'
 
-export const TIME_ORDER: TimeOfDay[] = ['dawn', 'noon', 'dusk', 'night']
+export const TIME_ORDER: TimeOfDay[] = ['morning', 'noon', 'afternoon', 'sunset', 'night']
 
 export interface TodConfig {
   label: string
-  /** Sun direction (normalised-ish), also used to place the key light. */
+  /** Sun direction, also used to place the key light. */
   sun: [number, number, number]
   sunColor: string
   sunIntensity: number
@@ -18,33 +18,32 @@ export interface TodConfig {
   fog: string
   background: string
   stars: boolean
-  /** drei <Sky> tuning */
   skyTurbidity: number
   skyRayleigh: number
 }
 
 export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
-  dawn: {
-    label: 'Dawn',
-    sun: [-120, 34, 90],
-    sunColor: '#ffd0a0',
-    sunIntensity: 2.1,
-    ambientColor: '#8a9bd0',
-    ambientIntensity: 0.5,
-    hemiSky: '#f0c9a8',
-    hemiGround: '#4a4535',
-    hemiIntensity: 0.95,
-    fog: '#d9c3b0',
-    background: '#c9b3a6',
+  morning: {
+    label: 'Morning',
+    sun: [-150, 70, 80],
+    sunColor: '#ffe0b8',
+    sunIntensity: 2.5,
+    ambientColor: '#a9bce6',
+    ambientIntensity: 0.55,
+    hemiSky: '#e9d6bd',
+    hemiGround: '#586044',
+    hemiIntensity: 1.0,
+    fog: '#cfd8e0',
+    background: '#c3cfdd',
     stars: false,
-    skyTurbidity: 8,
-    skyRayleigh: 2.4,
+    skyTurbidity: 5,
+    skyRayleigh: 1.7,
   },
   noon: {
-    label: 'Midday',
-    sun: [120, 180, 60],
+    label: 'Noon',
+    sun: [120, 190, 40],
     sunColor: '#fff6e8',
-    sunIntensity: 3.1,
+    sunIntensity: 3.2,
     ambientColor: '#cfe0ff',
     ambientIntensity: 0.65,
     hemiSky: '#dcecff',
@@ -56,11 +55,27 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 3,
     skyRayleigh: 1,
   },
-  dusk: {
+  afternoon: {
+    label: 'Afternoon',
+    sun: [170, 90, -70],
+    sunColor: '#ffe6c4',
+    sunIntensity: 2.8,
+    ambientColor: '#c1cbe0',
+    ambientIntensity: 0.55,
+    hemiSky: '#f0dcc0',
+    hemiGround: '#55603d',
+    hemiIntensity: 0.95,
+    fog: '#c2c3c0',
+    background: '#bcc6cf',
+    stars: false,
+    skyTurbidity: 6,
+    skyRayleigh: 1.6,
+  },
+  sunset: {
     label: 'Sunset',
-    sun: [140, 24, -40],
-    sunColor: '#ff9868',
-    sunIntensity: 2.3,
+    sun: [200, 18, -60],
+    sunColor: '#ff9050',
+    sunIntensity: 2.2,
     ambientColor: '#7d6b9c',
     ambientIntensity: 0.5,
     hemiSky: '#ff9d6a',
@@ -78,14 +93,19 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#9fb6e0',
     sunIntensity: 0.45,
     ambientColor: '#2a3350',
-    ambientIntensity: 0.22,
+    ambientIntensity: 0.24,
     hemiSky: '#20263c',
     hemiGround: '#0c0c14',
-    hemiIntensity: 0.35,
+    hemiIntensity: 0.4,
     fog: '#10131f',
     background: '#0a0c15',
     stars: true,
     skyTurbidity: 0.2,
     skyRayleigh: 0.4,
   },
+}
+
+/** Safe lookup — tolerates a stale value persisted from an older preset list. */
+export function todConfig(t: string): TodConfig {
+  return (TIME_OF_DAY as Record<string, TodConfig>)[t] ?? TIME_OF_DAY.noon
 }

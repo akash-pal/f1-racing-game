@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { DirectionalLight } from 'three'
 import { useGameStore } from '../state/useGameStore'
-import { TIME_OF_DAY } from '../lib/timeOfDay'
+import { todConfig } from '../lib/timeOfDay'
 
 // Sky, stars and all scene lighting, driven by the time-of-day setting (cycled
 // with T). The key light tracks the car so shadows land near the action on a
@@ -15,7 +15,7 @@ interface Props {
 
 export function SkyDome({ targetRef }: Props) {
   const tod = useGameStore((s) => s.timeOfDay)
-  const cfg = TIME_OF_DAY[tod]
+  const cfg = todConfig(tod)
   const lightRef = useRef<DirectionalLight>(null)
 
   useFrame(() => {

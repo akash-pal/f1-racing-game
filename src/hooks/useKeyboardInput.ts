@@ -80,13 +80,19 @@ export function useKeyboardInput(): void {
       prev = now
       const s = useInputStore.getState()
 
+      // Steering does NOT auto-centre. While a key is held (or the mouse is
+      // steering) it moves briskly toward the target; when you let go it HOLDS,
+      // easing back to centre only very gently (like light caster) so the car
+      // never "corrects itself" out from under you.
       const keySteer = (held.right ? 1 : 0) - (held.left ? 1 : 0)
+      const engaging = keySteer !== 0 || mouseActive
       const steerTarget = keySteer !== 0 ? keySteer : mouseActive ? mouseSteer : 0
+      const steerRate = engaging ? 11 : 0.9
 
       s.set({
         throttle: dampTowards(s.throttle, held.fwd ? 1 : 0, RAMP, dt),
         brake: dampTowards(s.brake, held.back ? 1 : 0, RAMP, dt),
-        steer: dampTowards(s.steer, steerTarget, RAMP, dt),
+        steer: dampTowards(s.steer, steerTarget, steerRate, dt),
         handbrake: held.handbrake,
       })
       raf = requestAnimationFrame(tick)

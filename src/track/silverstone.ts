@@ -26,10 +26,12 @@ const ANCHORS: [number, number][] = [
   [ -250,  -30], [ -278,    6],
   // --- The Loop: tight ~180° left hairpin at the western extreme ---
   [ -282,   46], [ -254,   74], [ -214,   66],
-  // --- Aintree, the return leg running back east (well south of Wellington) ---
-  [ -170,   44], [ -110,   38], [  -40,   34],
-  // --- Brooklands / Luffield, curving south then back up to the pit straight ---
-  [   -8,   64], [  -18,  130], [  -66,  178], [ -100,  206],
+  // --- Aintree, the return leg running back east, well south of Wellington ---
+  [ -172,   48], [ -134,   42], [  -98,   46],
+  // --- long, open left sweeping up the west side of the infield ---
+  [  -74,   72], [  -66,  116], [  -92,  140],
+  // --- final corner: a smooth ~100 deg left onto the pit straight (no cusp) ---
+  [ -105,  171], [  -95,  196],
 ]
 
 export interface TrackModel {

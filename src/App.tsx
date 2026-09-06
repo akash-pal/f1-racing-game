@@ -1,6 +1,7 @@
 import { Leva } from 'leva'
 import { Hud } from './app/Hud'
 import { ModeSwitcher } from './app/ModeSwitcher'
+import { TimeOfDayPicker } from './app/TimeOfDayPicker'
 import { useKeyboardInput } from './hooks/useKeyboardInput'
 import { useRaceControl } from './hooks/useRaceControl'
 import { useResetOnKey } from './hooks/useResetOnKey'
@@ -26,6 +27,7 @@ export default function App() {
       {mode === '3d' && <Game3D />}
 
       <ModeSwitcher />
+      <TimeOfDayPicker />
       <Hud />
       <Leva collapsed hidden={mode !== '3d'} />
       <div className="overlay overlay--top-right">
