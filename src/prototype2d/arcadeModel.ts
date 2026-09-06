@@ -1,3 +1,4 @@
+import { STEER_SIGN } from '../lib/constants'
 import { clamp } from '../lib/math'
 import type { ArcadeCarState, InputAxes } from '../lib/types'
 
@@ -53,7 +54,7 @@ export function stepCar(
   const speedFactor = 1 / (1 + Math.abs(v) * STEER_FALLOFF)
   const lowSpeedGate = clamp(Math.abs(v) / 3, 0, 1)
   const turnRate =
-    input.steer * MAX_STEER_RATE * speedFactor * lowSpeedGate * Math.sign(v || 1)
+    STEER_SIGN * input.steer * MAX_STEER_RATE * speedFactor * lowSpeedGate * Math.sign(v || 1)
   h += turnRate * dt
 
   // --- integrate position along heading (0 rad = -Z) ---

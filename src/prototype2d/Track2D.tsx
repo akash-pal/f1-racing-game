@@ -1,49 +1,78 @@
-import { TRACK, TRACK_CENTER_RADIUS } from '../lib/constants'
+import { Line } from '@react-three/drei'
+import { useMemo } from 'react'
+import { DoubleSide, Vector3 } from 'three'
+import { getSilverstone } from '../track/silverstone'
+import { buildKerbGeometries, buildRoadGeometry } from '../track/trackMesh'
 
-// Flat painted ring track + infield/outfield grass + start/finish stripe.
-// Purely visual — boundaries live in trackBounds.ts.
-//
-// Every piece is a flat geometry (built in local XY) rotated -90deg about X so
-// its front face points up (+Y) toward the top-down camera. After that rotation
-// local +Y maps to world -Z, so world positions are given directly on each mesh.
+// Top-down Silverstone outline for the 2D prototype. Same centre-line and edges
+// as the 3D scene — the tarmac ribbon, kerbs, edge lines and barrier lines
+// (offset just outside each edge) that give the "3D" track its footprint.
 
-const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0]
+const BARRIER_OFFSET = 1.2
 
 export function Track2D() {
+  const track = getSilverstone()
+  const road = useMemo(() => buildRoadGeometry(0.0), [])
+  const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
+
+  const flat = (pts: Vector3[], y = 0.03) => pts.map((p) => new Vector3(p.x, y, p.z))
+
+  const outerBarrier = useMemo(() => {
+    const t = getSilverstone()
+    return t.leftEdge.map((e, i) => {
+      const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
+      return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)
+    })
+  }, [])
+  const innerBarrier = useMemo(() => {
+    const t = getSilverstone()
+    return t.rightEdge.map((e, i) => {
+      const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
+      return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)
+    })
+  }, [])
+
+  const startYaw = Math.atan2(track.start.forward.x, track.start.forward.z)
+
   return (
     <group>
-      {/* grass / out of bounds */}
-      <mesh rotation={FLAT} position={[0, -0.03, 0]}>
-        <planeGeometry args={[200, 200]} />
-        <meshBasicMaterial color="#26361f" />
+      {/* grass */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[track.bounds.centerX, -0.05, track.bounds.centerZ]}>
+        <planeGeometry args={[track.bounds.width + 200, track.bounds.depth + 200]} />
+        <meshBasicMaterial color="#25361d" />
       </mesh>
 
-      {/* tarmac ring */}
-      <mesh rotation={FLAT} position={[0, -0.01, 0]}>
-        <ringGeometry args={[TRACK.innerRadius, TRACK.outerRadius, 96]} />
-        <meshBasicMaterial color="#3b3f45" />
+      {/* tarmac */}
+      <mesh geometry={road}>
+        <meshBasicMaterial color="#3a3e44" side={DoubleSide} />
       </mesh>
 
-      {/* inner & outer edge lines */}
-      <mesh rotation={FLAT} position={[0, 0, 0]}>
-        <ringGeometry args={[TRACK.innerRadius - 0.25, TRACK.innerRadius, 96]} />
-        <meshBasicMaterial color="#dcdcdc" />
+      {/* kerbs */}
+      <mesh geometry={kerbA}>
+        <meshBasicMaterial color="#c33636" side={DoubleSide} />
       </mesh>
-      <mesh rotation={FLAT} position={[0, 0, 0]}>
-        <ringGeometry args={[TRACK.outerRadius, TRACK.outerRadius + 0.25, 96]} />
-        <meshBasicMaterial color="#dcdcdc" />
+      <mesh geometry={kerbB}>
+        <meshBasicMaterial color="#e6e6e6" side={DoubleSide} />
       </mesh>
 
-      {/* infield fill (covers the ring's centre hole) */}
-      <mesh rotation={FLAT} position={[0, -0.02, 0]}>
-        <circleGeometry args={[TRACK.innerRadius - 0.25, 96]} />
-        <meshBasicMaterial color="#26361f" />
-      </mesh>
+      {/* edge lines */}
+      <Line points={flat(track.leftEdge)} color="#dddddd" lineWidth={1.5} />
+      <Line points={flat(track.rightEdge)} color="#dddddd" lineWidth={1.5} />
 
-      {/* start/finish stripe where the car spawns (world +Z) */}
-      <mesh rotation={FLAT} position={[0, 0.01, TRACK_CENTER_RADIUS]}>
-        <planeGeometry args={[TRACK.outerRadius - TRACK.innerRadius, TRACK.stripeHalfWidth * 2]} />
-        <meshBasicMaterial color="#eaeaea" />
+      {/* centre line (racing line reference) */}
+      <Line points={flat(track.samples, 0.04)} color="#e0c060" lineWidth={1} dashed dashSize={5} gapSize={5} />
+
+      {/* barriers */}
+      <Line points={outerBarrier} color="#b7bcc4" lineWidth={2.5} />
+      <Line points={innerBarrier} color="#b7bcc4" lineWidth={2.5} />
+
+      {/* start / finish */}
+      <mesh
+        position={[track.start.position.x, 0.06, track.start.position.z]}
+        rotation={[-Math.PI / 2, 0, startYaw]}
+      >
+        <planeGeometry args={[track.halfWidth * 2, 3]} />
+        <meshBasicMaterial color="#f0f0f0" />
       </mesh>
     </group>
   )

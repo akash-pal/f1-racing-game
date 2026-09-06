@@ -1,10 +1,10 @@
-import { TRACK } from '../lib/constants'
+import { getSilverstone } from '../track/silverstone'
 import type { TrackSample } from '../lib/types'
 
-// Pure track-surface sampling for the Phase 2 ring. Off-track lowers grip, which
-// the arcade model turns into a hard speed scrub — no teleport, no wall.
+// Track-surface sampling for the 2D prototype — delegates to the shared
+// Silverstone model. Off-track lowers grip, which the arcade model turns into a
+// hard speed scrub (no teleport, no wall).
 export function sampleTrack(x: number, z: number): TrackSample {
-  const r = Math.hypot(x, z)
-  const onTrack = r > TRACK.innerRadius && r < TRACK.outerRadius
-  return { onTrack, grip: onTrack ? 1 : 0.35 }
+  const s = getSilverstone().sample(x, z)
+  return { onTrack: s.onTrack, grip: s.grip }
 }

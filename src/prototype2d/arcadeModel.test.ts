@@ -43,6 +43,18 @@ describe('arcade car', () => {
     expect(Math.sign(revTurn.h)).toBe(-Math.sign(fwdTurn.h))
   })
 
+  it('steering RIGHT (steer = +1) curves the car toward its right (+X, clockwise from above)', () => {
+    // car starts facing -Z; a right turn should push it toward +X and turn the
+    // heading negative (see STEER_SIGN in constants)
+    const after = run(start(), { throttle: 1, steer: 1 }, 2.5)
+    expect(after.x).toBeGreaterThan(2)
+    expect(after.h).toBeLessThan(0)
+    // and steering LEFT is the mirror image
+    const left = run(start(), { throttle: 1, steer: -1 }, 2.5)
+    expect(left.x).toBeLessThan(-2)
+    expect(left.h).toBeGreaterThan(0)
+  })
+
   it('does not rotate when stationary (no pivot in place)', () => {
     const after = run(start(), { steer: 1 }, 1)
     expect(Math.abs(after.h)).toBeLessThan(1e-6)

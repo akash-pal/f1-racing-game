@@ -2,7 +2,9 @@ import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
 import { useEffect, useRef, type RefObject } from 'react'
 import { Vector3, Quaternion, type Group } from 'three'
-import { KMH_PER_MS, SPAWN_3D, WHEEL_POSITIONS } from '../lib/constants'
+import { KMH_PER_MS, WHEEL_POSITIONS } from '../lib/constants'
+import { spawn3D } from '../track/silverstone'
+import { F1Car } from '../car/F1Car'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { useGameStore } from '../state/useGameStore'
 import { useHudStore } from '../state/useHudStore'
@@ -17,6 +19,28 @@ interface Props {
 
 const Y_AXIS = new Vector3(0, 1, 0)
 const spawnQuat = new Quaternion()
+const SPAWN = spawn3D()
+
+function Tyre({ radius }: { radius: number }) {
+  return (
+    <group rotation={[0, 0, Math.PI / 2]}>
+      <mesh castShadow>
+        <cylinderGeometry args={[radius, radius, 0.42, 22]} />
+        <meshStandardMaterial color="#141414" roughness={0.85} />
+      </mesh>
+      {/* rim */}
+      <mesh>
+        <cylinderGeometry args={[radius * 0.55, radius * 0.55, 0.44, 18]} />
+        <meshStandardMaterial color="#c9ccd2" metalness={0.7} roughness={0.35} />
+      </mesh>
+      {/* spoke marker so wheel spin is visible */}
+      <mesh position={[0, 0.22, 0]}>
+        <boxGeometry args={[0.06, 0.02, radius * 1.5]} />
+        <meshStandardMaterial color="#e0e0e0" />
+      </mesh>
+    </group>
+  )
+}
 
 export function Vehicle({ tuning, chassisRef }: Props) {
   const controllerRef = useRaycastVehicle(chassisRef, tuning)
@@ -29,11 +53,8 @@ export function Vehicle({ tuning, chassisRef }: Props) {
   useEffect(() => {
     const b = chassisRef.current
     if (b) {
-      spawnQuat.setFromAxisAngle(Y_AXIS, SPAWN_3D.heading)
-      b.setTranslation(
-        { x: SPAWN_3D.position[0], y: SPAWN_3D.position[1], z: SPAWN_3D.position[2] },
-        true,
-      )
+      spawnQuat.setFromAxisAngle(Y_AXIS, SPAWN.heading)
+      b.setTranslation({ x: SPAWN.position[0], y: SPAWN.position[1], z: SPAWN.position[2] }, true)
       b.setRotation(spawnQuat, true)
       b.setLinvel({ x: 0, y: 0, z: 0 }, true)
       b.setAngvel({ x: 0, y: 0, z: 0 }, true)
@@ -77,37 +98,27 @@ export function Vehicle({ tuning, chassisRef }: Props) {
     }
   })
 
+  const rearRadius = tuning.wheelRadius * 1.05
+
   return (
     <RigidBody
       ref={chassisRef}
-      position={SPAWN_3D.position}
+      position={SPAWN.position}
       colliders={false}
       canSleep={false}
       ccd
       linearDamping={0.15}
-      angularDamping={0.6}
+      angularDamping={0.7}
     >
-      {/* single chassis collider; mass placed slightly low for rollover resistance */}
+      {/* chassis collider; mass placed low for rollover resistance */}
       <CuboidCollider
-        args={[0.9, 0.4, 1.9]}
-        position={[0, -0.12, 0]}
+        args={[0.55, 0.28, 2.3]}
+        position={[0, -0.05, 0.1]}
         mass={tuning.chassisMass}
-        friction={0.8}
+        friction={0.7}
       />
 
-      {/* visual chassis */}
-      <mesh castShadow position={[0, 0.05, 0]}>
-        <boxGeometry args={[1.8, 0.6, 3.9]} />
-        <meshStandardMaterial color="#2f6fd0" metalness={0.25} roughness={0.55} />
-      </mesh>
-      <mesh castShadow position={[0, 0.45, 0.35]}>
-        <boxGeometry args={[1.1, 0.45, 1.5]} />
-        <meshStandardMaterial color="#12233b" />
-      </mesh>
-      <mesh position={[0, 0, -2.05]}>
-        <boxGeometry args={[1.2, 0.35, 0.4]} />
-        <meshStandardMaterial color="#f4d03f" />
-      </mesh>
+      <F1Car />
 
       {WHEEL_POSITIONS.map((pos, i) => (
         <group
@@ -122,14 +133,7 @@ export function Vehicle({ tuning, chassisRef }: Props) {
               rollRefs.current[i] = g
             }}
           >
-            <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-              <cylinderGeometry args={[tuning.wheelRadius, tuning.wheelRadius, 0.34, 20]} />
-              <meshStandardMaterial color="#171717" />
-            </mesh>
-            <mesh rotation={[0, 0, Math.PI / 2]}>
-              <boxGeometry args={[0.36, tuning.wheelRadius * 1.7, 0.08]} />
-              <meshStandardMaterial color="#8f8f8f" />
-            </mesh>
+            <Tyre radius={i < 2 ? tuning.wheelRadius : rearRadius} />
           </group>
         </group>
       ))}

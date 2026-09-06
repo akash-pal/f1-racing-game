@@ -80,21 +80,29 @@ record a demo GIF, link it from your GitHub profile.
    where you left off.
 
 ## Current Status
-- [x] Phase 0 — Environment Setup (Vite + React 19 + R3F v9 + Rapier v2, blank canvas renders)
+- [x] Phase 0 — Environment Setup (Vite + React 19 + R3F v9 + Rapier v2)
 - [x] Phase 1 — Fundamentals (Sandbox scene: Rapier ground + keyboard-driven box)
-- [x] Phase 2 — 2D / Top-Down Prototype (arcade model + ring track; verified by unit tests)
-- [x] Phase 3 — 3D Driving Physics (Rapier raycast vehicle + chase camera; physics
-      verified by headless integration tests — visual feel-tuning still pending)
-- [ ] Phase 4 — Real Circuit (Monaco)
-- [ ] Phase 5 — G29 Wheel & Pedal Support
+- [x] Phase 2 — 2D / Top-Down Prototype (arcade model; now on the Silverstone outline)
+- [x] Phase 3 — 3D Driving Physics (Rapier raycast vehicle + chase camera)
+- [~] Phase 4 — Real Circuit: **stylised Silverstone** built (`src/track/silverstone.ts`),
+      shared by 2D and 3D, with kerbs + barriers (trimesh colliders) either side.
+      Monaco not attempted; the track is a hand-authored Silverstone-shaped loop.
+- [ ] Phase 5 — G29 Wheel & Pedal Support (mouse steering added as a stopgap)
 - [ ] Phase 6 — Cross-Platform Polish
 - [ ] Phase 7 — Deploy & Showcase
 
 ### Notes for next session
-- `npm run dev` then open the Browser pane; `npm test` runs the vitest suite.
-- Scene switch is the store (`useGameStore.mode`): Sandbox / 2D / 3D — buttons top-left.
-- Controls: W/↑ throttle, S/↓ brake+reverse, A/D steer, Space handbrake, R reset, P pause.
-- Phase 3 live-tuning via the leva panel (top-right, 3D mode only).
-- Still to verify visually: all 3 scenes render; chase-camera smoothness; steering
-  left/right matches key; no rollover in hard corners; a full 2D lap + lap timer.
-- `src/**/*.test.ts` — arcade model, track bounds, and a real headless Rapier vehicle test.
+- `npm run dev` then open the Browser pane; `npm test` runs vitest (22 tests).
+- Scene switch = `useGameStore.mode`: Sandbox / 2D / 3D (buttons top-left).
+- Controls: W/↑ throttle, S/↓ brake+reverse, A/D **or mouse X** steer, Space handbrake,
+  R reset, P pause. `STEER_SIGN` in `lib/constants.ts` is the one knob for steer polarity.
+- Track: `src/track/silverstone.ts` (centre-line anchors + curve + sample/finish-line
+  helpers), `src/track/trackMesh.ts` (road/kerb/wall geometry), `Track2D` / `Track3D`.
+  `node --experimental-strip-types scripts/renderTrackSvg.ts /tmp/t.svg` dumps the layout.
+- Car model: `src/car/F1Car.tsx` — low-poly F1-2026 body (from the reference USDZ),
+  used in both scenes; wheels are separate, driven by the Rapier vehicle controller.
+- Verified: geometry (no self-intersection), steering polarity (right = clockwise),
+  barriers contain the car, both scenes render. NOT yet verified live: a full timed lap,
+  chase-cam feel, mouse-steer feel (browser preview keeps auto-hiding — needs a human).
+- Tuning ideas: track width (`HALF_WIDTH`), barrier height (`Track3D` `WALL_HEIGHT`),
+  2D car scale (`Car2D` `CAR_SCALE`), light should follow the car for shadows on a big map.

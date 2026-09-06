@@ -1,7 +1,9 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import type { Group } from 'three'
-import { KMH_PER_MS, SPAWN_2D } from '../lib/constants'
+import { KMH_PER_MS } from '../lib/constants'
+import { spawn2D } from '../track/silverstone'
+import { F1Car } from '../car/F1Car'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { useGameStore } from '../state/useGameStore'
 import { useHudStore } from '../state/useHudStore'
@@ -10,7 +12,15 @@ import type { ArcadeCarState } from '../lib/types'
 import { stepCar } from './arcadeModel'
 import { sampleTrack } from './trackBounds'
 
-const spawnState = (): ArcadeCarState => ({ x: SPAWN_2D.x, z: SPAWN_2D.z, h: SPAWN_2D.h, v: 0 })
+// Top-down car for the 2D prototype. Scaled up so it reads on the full-circuit
+// map view. Uses the pure arcade model (no physics engine).
+
+const CAR_SCALE = 3.4
+
+const spawnState = (): ArcadeCarState => {
+  const s = spawn2D()
+  return { x: s.x, z: s.z, h: s.h, v: 0 }
+}
 
 export function Car2D() {
   const group = useRef<Group>(null)
@@ -25,14 +35,14 @@ export function Car2D() {
     hudAccum.current = 0
     lap.reset(performance.now())
     if (group.current) {
-      group.current.position.set(SPAWN_2D.x, 0.35, SPAWN_2D.z)
-      group.current.rotation.y = SPAWN_2D.h
+      group.current.position.set(car.current.x, 0.4, car.current.z)
+      group.current.rotation.y = car.current.h
     }
   }, [resetNonce, lap])
 
   useFrame((_, rawDt) => {
     if (paused) return
-    const dt = Math.min(rawDt, 1 / 30) // clamp huge frames (tab refocus)
+    const dt = Math.min(rawDt, 1 / 30)
     const input = useInputStore.getState()
     const { onTrack, grip } = sampleTrack(car.current.x, car.current.z)
     car.current = stepCar(car.current, input, grip, dt)
@@ -57,22 +67,10 @@ export function Car2D() {
   })
 
   return (
-    <group ref={group} position={[SPAWN_2D.x, 0.35, SPAWN_2D.z]}>
-      {/* body */}
-      <mesh castShadow>
-        <boxGeometry args={[1.6, 0.5, 3.2]} />
-        <meshStandardMaterial color="#d23b3b" />
-      </mesh>
-      {/* nose marker (points -Z = forward) */}
-      <mesh position={[0, 0.05, -1.5]}>
-        <boxGeometry args={[1.2, 0.55, 0.5]} />
-        <meshStandardMaterial color="#f4d03f" />
-      </mesh>
-      {/* cockpit */}
-      <mesh position={[0, 0.35, 0.3]}>
-        <boxGeometry args={[1.0, 0.4, 1.1]} />
-        <meshStandardMaterial color="#1c1c1c" />
-      </mesh>
+    <group ref={group} position={[0, 0.4, 0]}>
+      <group scale={CAR_SCALE}>
+        <F1Car primary="#d23b3b" accent="#f4d03f" />
+      </group>
     </group>
   )
 }

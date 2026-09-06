@@ -1,32 +1,38 @@
 import { useRef } from 'react'
+import { makeFinishLine } from '../track/silverstone'
 import { useHudStore } from '../state/useHudStore'
 
-// Shared lap timing for the ring track (2D and 3D). The start/finish line is the
-// +Z half-axis (x = 0, z > 0), where both cars spawn.
+// Shared lap timing for the Silverstone circuit (2D and 3D).
 //
-// Crossing rule: count a lap when x goes negative -> positive while z > 0, but
-// only if "armed" — the car must have visited the far half (z < 0) since the
-// last count. This rejects jitter at the line and reversing back over it.
+// The start/finish line is perpendicular to the racing direction at the spawn
+// point. A lap counts when the car crosses that line moving forwards (signed
+// distance goes negative -> positive) while within the track width, and only if
+// "armed" — the car must have travelled well past the line (signed distance
+// beyond a threshold) since the previous count. This rejects line jitter and
+// reversing back over it.
 
 interface LapTracker {
-  /** Call every frame with the car's world XZ and the current time in ms. */
   update: (x: number, z: number, nowMs: number) => void
   reset: (nowMs: number) => void
 }
 
+const ARM_DISTANCE = 80 // how far past the line before another lap can count
+
 export function useLapTimer(): LapTracker {
   const ref = useRef<LapTracker | null>(null)
   if (ref.current === null) {
-    let prevX = 0
+    const line = makeFinishLine()
+    let prevD = 0
     let armed = false
     let lapStartMs = performance.now()
-    let started = false // ignore the very first crossing (leaving the grid)
+    let started = false // ignore the first crossing (leaving the grid)
 
     ref.current = {
       update: (x, z, nowMs) => {
-        if (z < -5) armed = true
-        const crossed = prevX < 0 && x >= 0 && z > 0
-        if (crossed && armed) {
+        const d = line.signedDist(x, z)
+        if (d < -ARM_DISTANCE || d > ARM_DISTANCE) armed = true
+        const crossedForward = prevD < 0 && d >= 0 && Math.abs(d) < 20
+        if (crossedForward && armed && line.withinWidth(x, z)) {
           armed = false
           if (started) {
             const lapMs = nowMs - lapStartMs
@@ -41,10 +47,10 @@ export function useLapTimer(): LapTracker {
           }
           lapStartMs = nowMs
         }
-        prevX = x
+        prevD = d
       },
       reset: (nowMs) => {
-        prevX = 0
+        prevD = 0
         armed = false
         started = false
         lapStartMs = nowMs

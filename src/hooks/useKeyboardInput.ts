@@ -3,16 +3,16 @@ import { KEY_MAP } from '../lib/constants'
 import { dampTowards } from '../lib/math'
 import { useInputStore } from '../state/useInputStore'
 
-// Maps the keyboard to the analog input axes in useInputStore.
+// Maps the keyboard AND the mouse to the analog input axes in useInputStore.
 //
 // - Runs its OWN requestAnimationFrame loop (not useFrame) so it can be mounted
 //   once in <App>, outside any <Canvas>, and keep working across scene switches.
-// - Keys ramp the axes toward their targets (dampTowards) instead of snapping —
-//   instant full-lock steering feels awful, and Phase 2's speed-scaled steering
-//   wants a continuous input.
-// - A window 'blur' handler clears held keys so a key can't get "stuck" when the
-//   tab loses focus mid-press.
-// - isTyping() stops Space from both handbraking and activating a focused button.
+// - Steering: keyboard A/D (or ←/→) ramp the steer axis toward ±1. Moving the
+//   mouse steers by absolute horizontal position — pointer at the left edge =
+//   full left lock, centre = straight, right edge = full right. A key press
+//   overrides the mouse while held.
+// - Contract: steer axis is +1 for RIGHT, -1 for LEFT (see constants STEER_SIGN).
+// - A window 'blur' handler clears held keys so a key can't get "stuck".
 
 type Held = { fwd: boolean; back: boolean; left: boolean; right: boolean; handbrake: boolean }
 
@@ -32,28 +32,46 @@ const isTyping = (): boolean => {
   )
 }
 
+const MOUSE_DEADZONE = 0.05
+
 export function useKeyboardInput(): void {
   useEffect(() => {
     const held = freshHeld()
-    const RAMP = 7 // axis e-folds per second
+    let mouseSteer = 0
+    let mouseActive = false
+    const RAMP = 8 // axis e-folds per second
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return
       const action = KEY_MAP[e.code]
       if (!action) return
       if (e.code === 'Space' && isTyping()) return
-      if (e.code === 'Space') e.preventDefault() // stop page scroll
+      if (e.code === 'Space') e.preventDefault()
       held[action] = true
     }
     const onKeyUp = (e: KeyboardEvent) => {
       const action = KEY_MAP[e.code]
       if (action) held[action] = false
     }
-    const onBlur = () => Object.assign(held, freshHeld())
+    const onBlur = () => {
+      Object.assign(held, freshHeld())
+      mouseActive = false
+    }
+    const onMouseMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1 // -1 .. 1
+      const dz = Math.abs(nx) < MOUSE_DEADZONE ? 0 : (nx - Math.sign(nx) * MOUSE_DEADZONE) / (1 - MOUSE_DEADZONE)
+      mouseSteer = Math.max(-1, Math.min(1, dz))
+      mouseActive = true
+    }
+    const onMouseLeave = () => {
+      mouseActive = false
+    }
 
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', onBlur)
+    window.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseleave', onMouseLeave)
 
     let raf = 0
     let prev = performance.now()
@@ -61,7 +79,10 @@ export function useKeyboardInput(): void {
       const dt = Math.min((now - prev) / 1000, 0.1)
       prev = now
       const s = useInputStore.getState()
-      const steerTarget = (held.right ? 1 : 0) - (held.left ? 1 : 0)
+
+      const keySteer = (held.right ? 1 : 0) - (held.left ? 1 : 0)
+      const steerTarget = keySteer !== 0 ? keySteer : mouseActive ? mouseSteer : 0
+
       s.set({
         throttle: dampTowards(s.throttle, held.fwd ? 1 : 0, RAMP, dt),
         brake: dampTowards(s.brake, held.back ? 1 : 0, RAMP, dt),
@@ -77,6 +98,8 @@ export function useKeyboardInput(): void {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('blur', onBlur)
+      window.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseleave', onMouseLeave)
       useInputStore.getState().reset()
     }
   }, [])

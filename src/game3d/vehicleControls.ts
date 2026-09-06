@@ -1,6 +1,6 @@
 import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import type { RapierRigidBody } from '@react-three/rapier'
-import { FRONT_WHEELS, REAR_WHEELS, WHEEL_POSITIONS } from '../lib/constants'
+import { FRONT_WHEELS, REAR_WHEELS, STEER_SIGN, WHEEL_POSITIONS } from '../lib/constants'
 import { clamp, moveTowards } from '../lib/math'
 import type { InputAxes, VehicleTuning } from '../lib/types'
 
@@ -103,7 +103,7 @@ export function applyVehicleControls(
 
   // steering: rate-limited, reduced at speed, front only
   const speedFactor = 1 / (1 + Math.abs(forwardSpeed) * 0.04)
-  const target = clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
+  const target = STEER_SIGN * clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
   state.steer = moveTowards(state.steer, target, t.steerRate * dt)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)
 
