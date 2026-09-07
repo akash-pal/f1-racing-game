@@ -60,14 +60,3 @@ export const WHEEL_POSITIONS: readonly [number, number, number][] = [
 
 export const FRONT_WHEELS = [0, 1] as const
 export const REAR_WHEELS = [2, 3] as const
-
-// Where the visible wheels are drawn, chassis-local, sized to the F1Car body.
-// Driven each frame by the matching physics wheel's spin / steer / suspension
-// travel. Order: FL, FR, RL, RR.
-export const WHEEL_VISUAL_POSITIONS: readonly [number, number, number][] = [
-  [-0.82, -0.43, -1.55],
-  [0.82, -0.43, -1.55],
-  [-0.86, -0.43, 1.62],
-  [0.86, -0.43, 1.62],
-]
-export const WHEEL_VISUAL_RADIUS = 0.34

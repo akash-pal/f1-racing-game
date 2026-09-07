@@ -1,17 +1,12 @@
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
-import { useEffect, useRef, type RefObject } from 'react'
-import { Group, Vector3, Quaternion } from 'three'
-import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
-import {
-  FRONT_WHEELS,
-  KMH_PER_MS,
-  WHEEL_VISUAL_POSITIONS,
-  WHEEL_VISUAL_RADIUS,
-} from '../lib/constants'
+import { Suspense, useEffect, useRef, type RefObject } from 'react'
+import { Vector3, Quaternion } from 'three'
+import { KMH_PER_MS } from '../lib/constants'
 import { pseudoGear } from '../lib/pseudoGear'
 import { spawn3D, getCircuit } from '../track/circuit'
 import { F1Car } from '../car/F1Car'
+import { F1CarModel } from '../car/F1CarModel'
 import { ghostCommitLap, ghostRecordFrame, ghostStartRecording } from '../car/ghost'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { raceGo } from '../hooks/useRaceControl'
@@ -31,89 +26,6 @@ const Y_AXIS = new Vector3(0, 1, 0)
 const spawnQuat = new Quaternion()
 const SPAWN = spawn3D()
 const track = getCircuit()
-
-// Visible wheels. The GLB body has no separate wheel meshes, so these are drawn
-// on top: steer angle + suspension travel come from the raycast controller, and
-// the rolling spin is integrated from the chassis' forward speed (the driven
-// rear wheels don't report a usable rotation from Rapier).
-function Wheels({
-  controllerRef,
-  chassisRef,
-  restLength,
-}: {
-  controllerRef: RefObject<DynamicRayCastVehicleController | null>
-  chassisRef: RefObject<RapierRigidBody | null>
-  restLength: number
-}) {
-  const steer = useRef<(Group | null)[]>([])
-  const roll = useRef<(Group | null)[]>([])
-  const spin = useRef(0)
-  const isFront = (i: number) => (FRONT_WHEELS as readonly number[]).includes(i)
-
-  useFrame((_, rawDt) => {
-    const c = controllerRef.current
-    const b = chassisRef.current
-    if (!c || !b) return
-    const dt = Math.min(rawDt, 1 / 30)
-
-    // signed forward speed along the chassis nose (-Z)
-    const lv = b.linvel()
-    const r = b.rotation()
-    const fx = 2 * (r.x * r.z + r.w * r.y)
-    const fz = 1 - 2 * (r.x * r.x + r.y * r.y)
-    const fwd = -(lv.x * fx + lv.z * fz)
-    spin.current += (fwd / WHEEL_VISUAL_RADIUS) * dt
-
-    for (let i = 0; i < 4; i++) {
-      const s = steer.current[i]
-      const w = roll.current[i]
-      if (!s || !w) continue
-      const susp = c.wheelSuspensionLength(i) || restLength
-      s.position.y = WHEEL_VISUAL_POSITIONS[i][1] + (restLength - susp)
-      s.rotation.y = isFront(i) ? c.wheelSteering(i) || 0 : 0
-      w.rotation.x = spin.current
-    }
-  })
-
-  return (
-    <>
-      {WHEEL_VISUAL_POSITIONS.map((p, i) => {
-        const R = WHEEL_VISUAL_RADIUS
-        const W = 0.34 // tyre width
-        const outboard = p[0] < 0 ? -1 : 1 // rim face points away from the car
-        return (
-          <group key={i} ref={(el) => (steer.current[i] = el)} position={p}>
-            <group ref={(el) => (roll.current[i] = el)}>
-              {/* slick tyre */}
-              <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-                <cylinderGeometry args={[R, R, W, 24]} />
-                <meshStandardMaterial color="#101011" roughness={0.9} metalness={0} />
-              </mesh>
-              {/* rim face on the outboard side, with a couple of spokes so the
-                  spin reads */}
-              <group position={[outboard * (W / 2 - 0.01), 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-                <mesh>
-                  <cylinderGeometry args={[R * 0.62, R * 0.62, 0.015, 18]} />
-                  <meshStandardMaterial color="#3a3d42" metalness={0.3} roughness={0.6} />
-                </mesh>
-                <mesh position={[0, 0.01, 0]}>
-                  <cylinderGeometry args={[R * 0.18, R * 0.18, 0.05, 10]} />
-                  <meshStandardMaterial color="#1c1d1f" metalness={0.4} roughness={0.55} />
-                </mesh>
-                {[0, 1, 2].map((k) => (
-                  <mesh key={k} position={[0, 0.012, 0]} rotation={[0, (k * Math.PI) / 3, 0]}>
-                    <boxGeometry args={[R * 1.05, 0.012, 0.045]} />
-                    <meshStandardMaterial color="#2a2c30" metalness={0.3} roughness={0.6} />
-                  </mesh>
-                ))}
-              </group>
-            </group>
-          </group>
-        )
-      })}
-    </>
-  )
-}
 
 export function Vehicle({ tuning, chassisRef }: Props) {
   const controllerRef = useRaycastVehicle(chassisRef, tuning)
@@ -265,16 +177,11 @@ export function Vehicle({ tuning, chassisRef }: Props) {
         friction={0.7}
       />
 
-      {/* The photoreal GLB bakes its wheels into the body mesh, so they can't be
-          spun without a doubled-up wheel showing through. Use the built-in F1
-          body, which is authored to take separate wheels. */}
-      <F1Car />
-
-      <Wheels
-        controllerRef={controllerRef}
-        chassisRef={chassisRef}
-        restLength={tuning.suspensionRestLength}
-      />
+      {/* Photoreal GLB body. Its wheels are baked into the body mesh, so they
+          stay static — a deliberate trade for the real model. */}
+      <Suspense fallback={<F1Car />}>
+        <F1CarModel />
+      </Suspense>
     </RigidBody>
   )
 }
