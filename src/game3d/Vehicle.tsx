@@ -166,7 +166,7 @@ export function Vehicle({ tuning, chassisRef }: Props) {
       canSleep={false}
       ccd
       linearDamping={0.15}
-      angularDamping={0.9}
+      angularDamping={1.4}
       enabledRotations={[false, true, false]}
       additionalSolverIterations={4}
     >

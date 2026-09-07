@@ -38,14 +38,14 @@ export const DEFAULT_TUNING: VehicleTuning = {
   engineForce: 5400,
   brakeForce: 2900,
   handbrakeForce: 5200,
-  maxSteer: 0.42,
-  steerRate: 4.2,
+  maxSteer: 0.4,
+  steerRate: 2.6, // slower rack -> smoother, less darty
   suspensionRestLength: 0.3,
   suspensionStiffness: 34,
   suspensionCompression: 1.6, // heavy damping -> no bounce/wobble
   suspensionRelaxation: 1.8,
   suspensionTravel: 0.1,
-  frictionSlip: 2.1, // planted, less slide
+  frictionSlip: 1.7, // planted but not snappy
   wheelRadius: 0.34,
 }
 

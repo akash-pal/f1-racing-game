@@ -32,7 +32,7 @@ const isTyping = (): boolean => {
   )
 }
 
-const MOUSE_DEADZONE = 0.05
+const MOUSE_DEADZONE = 0.08
 
 export function useKeyboardInput(): void {
   useEffect(() => {
@@ -60,7 +60,10 @@ export function useKeyboardInput(): void {
     const onMouseMove = (e: MouseEvent) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1 // -1 .. 1
       const dz = Math.abs(nx) < MOUSE_DEADZONE ? 0 : (nx - Math.sign(nx) * MOUSE_DEADZONE) / (1 - MOUSE_DEADZONE)
-      mouseSteer = Math.max(-1, Math.min(1, dz))
+      const raw = Math.max(-1, Math.min(1, dz))
+      // lowpass the pointer position so hand tremor / sensor jitter near centre
+      // doesn't turn into steering wobble
+      mouseSteer += (raw - mouseSteer) * 0.3
       mouseActive = true
     }
     const onMouseLeave = () => {

@@ -28,6 +28,8 @@ export function useRaycastVehicle(
   const controllerRef = useRef<DynamicRayCastVehicleController | null>(null)
   const madeForWorld = useRef<object | null>(null)
   const stepState = useRef<VehicleStepState>({ steer: 0 })
+  const gripRef = useRef(1)
+  const dampRef = useRef(0.15)
   const tuningRef = useRef(tuning)
   tuningRef.current = tuning
 
@@ -69,16 +71,23 @@ export function useRaycastVehicle(
     const gated = raceGo()
       ? input
       : { throttle: 0, brake: input.brake, steer: input.steer, handbrake: true }
-    // surface grip: full on tarmac, reduced on the grass either side
+    // surface grip: full on tarmac, reduced on the grass either side.
+    // Use a generous full-grip band so a car tracking mid-lane never sees the
+    // value flicker (a source of the wobble), and lerp toward the target so
+    // crossing the edge is a smooth handover, not a per-frame step change.
     const p = chassis.translation()
     const surf = track.sample(p.x, p.z)
-    const grip = surf.onTrack
+    const onTrack = surf.onTrack || surf.distToCenter < track.halfWidth * 0.9
+    const targetGrip = onTrack
       ? 1
       : surf.distToCenter < track.halfWidth + 3
         ? 0.72 // kerb / edge
         : 0.34 // grass — noticeably slow & slidey
-    // heavy rolling resistance on the grass
-    chassis.setLinearDamping(surf.onTrack ? 0.15 : 1.1)
+    gripRef.current += (targetGrip - gripRef.current) * 0.1
+    // heavy rolling resistance on the grass — also eased so it doesn't thrash
+    const targetDamp = onTrack ? 0.15 : 1.1
+    dampRef.current += (targetDamp - dampRef.current) * 0.1
+    chassis.setLinearDamping(dampRef.current)
     applyVehicleControls(
       controller,
       chassis,
@@ -87,7 +96,7 @@ export function useRaycastVehicle(
       game.paused,
       stepState.current,
       world.timestep,
-      { tcs: game.assists.tcs, grip },
+      { tcs: game.assists.tcs, grip: gripRef.current },
     )
   })
 

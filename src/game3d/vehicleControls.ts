@@ -133,11 +133,38 @@ export function applyVehicleControls(
     for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, slip)
   }
 
+  // progressive lateral grip (softer than the rapier default) so turn-in isn't
+  // snappy — a big contributor to the wobble
+  for (let i = 0; i < n; i++) controller.setWheelSideFrictionStiffness(i, 0.8 * grip)
+
   // steering: rate-limited, gently reduced at speed (not numbed), front only
   const speedFactor = 1 / (1 + Math.abs(forwardSpeed) * 0.02)
   const target = STEER_SIGN * clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
   state.steer = moveTowards(state.steer, target, t.steerRate * dt)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)
+
+  // --- yaw-rate stability control ---
+  // Nudge the car's actual yaw rate toward the rate the steering angle implies
+  // (bicycle model). This kills the corner-entry oscillation and the "turns the
+  // wrong way for a moment" transient without adding steady-state understeer.
+  // Skipped under handbrake so deliberate slides still rotate freely; a small
+  // always-on yaw damping term remains to settle the tail.
+  const yawRate = chassis.angvel().y
+  const stepScale = dt / (1 / 60)
+  if (input.handbrake) {
+    chassis.applyTorqueImpulse({ x: 0, y: -yawRate * 6 * stepScale, z: 0 }, true)
+  } else {
+    const WHEELBASE = 3.2
+    let targetYaw = 0
+    if (Math.abs(state.steer) > 1e-3 && Math.abs(forwardSpeed) > 1) {
+      targetYaw = (forwardSpeed * Math.tan(state.steer)) / WHEELBASE
+      const cap = (grip * 11) / Math.max(6, Math.abs(forwardSpeed)) // ~lateral-accel limit
+      targetYaw = clamp(targetYaw, -cap, cap)
+    }
+    const yawErr = targetYaw - yawRate
+    const yawImpulse = clamp(yawErr * 48 * stepScale, -220, 220)
+    chassis.applyTorqueImpulse({ x: 0, y: yawImpulse, z: 0 }, true)
+  }
 
   controller.updateVehicle(dt)
 
