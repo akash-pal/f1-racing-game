@@ -123,6 +123,8 @@ export function Vehicle({ tuning, chassisRef }: Props) {
       heading,
       speedMs,
       slip,
+      onKerb: surf.onKerb,
+      offTrack: !surf.onTrack,
     })
 
     // ghost recording

@@ -6,6 +6,7 @@ import { PerspectiveCamera as ThreePerspectiveCamera, Quaternion, Vector3 } from
 import { dampTowards } from '../lib/math'
 import { spawn3D } from '../track/circuit'
 import { useGameStore } from '../state/useGameStore'
+import { useLiveStore } from '../state/useLiveStore'
 
 const SPAWN = spawn3D()
 
@@ -87,6 +88,15 @@ export function CameraRig({ targetRef }: Props) {
     const lv = body.linvel()
     const speed = Math.hypot(lv.x, lv.y, lv.z)
 
+    // road-feel shake: a faint jitter on smooth tarmac that grows with speed,
+    // a real shudder on the kerbs, coarser on the grass
+    const live = useLiveStore.getState()
+    const rough = live.onKerb ? 1 : live.offTrack ? 0.45 : 0
+    const amt = (Math.min(1, speed / 46) * 0.22 + rough) * 0.07
+    const nt = performance.now() * (0.02 + rough * 0.035)
+    const shakeX = (Math.sin(nt * 1.7) + 0.5 * Math.sin(nt * 4.3)) * amt
+    const shakeY = (Math.sin(nt * 2.3 + 1) + 0.5 * Math.sin(nt * 5.1)) * amt
+
     if (view === 'top') {
       cam.fov = 45
       desired.set(carPos.x, carPos.y + 46, carPos.z + 0.001)
@@ -107,6 +117,8 @@ export function CameraRig({ targetRef }: Props) {
       fwd.set(0, 0, -1).applyQuaternion(fullQ)
       look.copy(cam.position).addScaledVector(fwd, 30)
       look.y += 1.4
+      look.x += shakeX
+      look.y += shakeY
       cam.lookAt(look)
       cam.fov = view === 'cockpit' ? 72 : 68
       cam.updateProjectionMatrix()
@@ -117,9 +129,13 @@ export function CameraRig({ targetRef }: Props) {
     desired.copy(CHASE_OFFSET).applyQuaternion(yawQ).add(carPos)
     if (desired.y < carPos.y + 1.1) desired.y = carPos.y + 1.1
     follow(cam, desired, 6, dt)
+    cam.position.x += shakeX * 0.5
+    cam.position.y += shakeY * 0.5
     fwd.set(0, 0, -1).applyQuaternion(yawQ)
     look.copy(carPos).addScaledVector(fwd, Math.min(speed * 0.12, 6))
     look.y += 0.35
+    look.x += shakeX
+    look.y += shakeY
     cam.lookAt(look)
     cam.fov = 64
     cam.updateProjectionMatrix()

@@ -12,6 +12,8 @@ interface LiveStore {
   heading: number // radians, game convention
   speedMs: number
   slip: number // 0..1 lateral slip / handbrake amount (for skid marks)
+  onKerb: boolean // a wheel is on a corner kerb
+  offTrack: boolean // the car is off the tarmac (on grass)
   set: (patch: Partial<Omit<LiveStore, 'set'>>) => void
 }
 
@@ -23,5 +25,11 @@ export const useLiveStore = create<LiveStore>((set) => ({
   heading: 0,
   speedMs: 0,
   slip: 0,
+  onKerb: false,
+  offTrack: false,
   set: (patch) => set(patch),
 }))
+
+if (import.meta.env?.DEV) {
+  ;(globalThis as unknown as Record<string, unknown>).__liveStore = useLiveStore
+}

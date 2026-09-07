@@ -101,21 +101,20 @@ export function useRaycastVehicle(
       { tcs: game.assists.tcs, grip: gripRef.current },
     )
 
-    // --- kerb rumble: a buzz through the car while a wheel is on a corner kerb.
-    // Deliberately light — a vibration, not a hit — so using the kerbs on the
-    // racing line doesn't feel like the car is breaking loose.
-    if (surf.onKerb && !game.paused && raceGo()) {
+    // --- surface vibration: a fast vertical shudder while a wheel is on a kerb
+    // (hard) or on the grass (softer) — a rattle you feel, not a hit that breaks
+    // the car loose. No lateral component (that read as "unstable").
+    if (!game.paused && raceGo() && (surf.onKerb || !surf.onTrack)) {
       const lv = chassis.linvel()
       const spd = Math.hypot(lv.x, lv.z)
       if (spd > 3) {
         kerbTick.current++
-        const buzz = (kerbTick.current % 2 === 0 ? 1 : -1) * (0.7 + 0.3 * Math.random())
+        const buzz = (kerbTick.current % 2 === 0 ? 1 : -1) * (0.72 + 0.28 * Math.random())
         const t = Math.min(1, spd / 22)
-        // vertical shudder only — no lateral skip (that read as "unstable")
-        chassis.applyImpulse({ x: 0, y: buzz * (55 + 120 * t), z: 0 }, true)
-        chassis.applyTorqueImpulse({ x: 0, y: buzz * (12 + 22 * t), z: 0 }, true)
-        // kerbs are a touch slippery, not ice
-        gripRef.current = Math.min(gripRef.current, 0.9)
+        const amp = surf.onKerb ? 120 + 260 * t : 45 + 120 * t
+        chassis.applyImpulse({ x: 0, y: buzz * amp, z: 0 }, true)
+        chassis.applyTorqueImpulse({ x: 0, y: buzz * (surf.onKerb ? 16 + 30 * t : 6 + 14 * t), z: 0 }, true)
+        if (surf.onKerb) gripRef.current = Math.min(gripRef.current, 0.9)
       }
     }
   })
