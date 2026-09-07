@@ -104,15 +104,20 @@ export function useEngineSound(): void {
       glide(idle.src.playbackRate, 0.85 + norm * 0.5)
       glide(power.src.playbackRate, 0.7 + norm * 0.95)
 
-      // idle bed while the engine is "running", ducking as you get on the power;
-      // on-power layer rises with throttle and revs
-      glide(idle.gain.gain, 0.32 * Math.min(1, 0.25 + moving * 1.6) * (1 - 0.8 * thr))
-      glide(power.gain.gain, Math.min(1, 0.9 * thr + 0.3 * Math.max(0, revFrac - 0.15) * (0.4 + moving)))
+      // idle bed while the engine is "running", ducking only part-way as you get
+      // on the power so it stays audible under the on-power layer
+      glide(idle.gain.gain, 0.4 * Math.min(1, 0.3 + moving * 1.6) * (1 - 0.5 * thr))
+      // on-power layer rises with throttle + revs, but never overpowers the mix
+      glide(
+        power.gain.gain,
+        Math.min(0.72, 0.5 * thr + 0.22 * Math.max(0, revFrac - 0.15) * (0.4 + moving)),
+      )
 
       // master: silent parked + off throttle, builds with load & speed, small
-      // trailing note on the overrun
-      const overrun = (1 - thr) * moving * 0.14
-      const target = Math.min(1, 0.9 * thr + 0.5 * moving + overrun)
+      // trailing note on the overrun. Deliberately well under 1 so throttle
+      // isn't harsh.
+      const overrun = (1 - thr) * moving * 0.12
+      const target = Math.min(0.6, 0.46 * thr + 0.3 * moving + overrun)
       const cur = master.gain.value
       glide(master.gain, target, target > cur ? 0.04 : 0.14)
     }

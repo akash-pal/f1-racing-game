@@ -1,42 +1,45 @@
 import { CatmullRomCurve3, Vector2, Vector3 } from 'three'
 
-// A stylised Buddh International Circuit (Indian GP) — hand-authored anchor
-// points, not surveyed data: the long main straight and T1 downhill right, the
-// T3 parabolic hairpin, the back straight to T4, the Sector-2 esses up the west
-// side, the huge double-apex T10-11-12 left, then T13-16 through the stadium
-// back onto the straight. Coordinates: +x east, +z south. ~16 corners.
+// A stylised Buddh International Circuit (Indian GP), clockwise like the real
+// track. Hand-authored anchors, not surveyed data, but following the real
+// layout's landmarks in order: the ~1 km main straight into the sharp T1 right,
+// the flat-out T2 left and the slow, blind T3 right that curl onto the equally
+// long back straight; the T4 heavy-braking hairpin at the far end; the Sector-2
+// esses (T5-T9); the fast banked multi-apex "Currybolica" T10-11-12 right; the
+// T13-14 chicane and the T15/T16 complex back onto the straight.
+// Coordinates: +x east, +z south. ~16 corners.
 
 // prettier-ignore
 const ANCHORS: [number, number][] = [
-  // --- main straight, from S/F heading east (+x) toward Turn 1 (dead flat) ---
-  [  -60,  181], [   70,  181], [  185,  181],
-  // --- T1: downhill right off the end of the straight ---
-  [  252,  168], [  300,  150],
-  // --- T2: long right, heading round to the south ---
-  [  332,  120], [  342,  155],
-  // --- T3: long parabolic right hairpin sweeping onto the back straight ---
-  [  335,  195], [  305,  225], [  258,  240],
-  // --- back straight (2nd DRS zone), heading west (-x) ---
-  [  130,  245], [  -20,  246], [ -165,  243],
-  // --- T4: hard braking left at the west end ---
-  [ -240,  230], [ -286,  196], [ -288,  156],
-  // --- T5-T6: quick right-left ---
-  [ -262,  124], [ -222,  104], [ -198,   66],
-  // --- T7-T8-T9: Sector-2 esses ---
-  [ -200,   30], [ -186,   -2], [ -180,  -30],
-  // --- T10-T11-T12: the huge double-apex left, hanging south-west ---
-  [ -232,  -42], [ -292,  -34], [ -334,  -74], [ -324, -122],
-  [ -272, -146], [ -210, -132], [ -172,  -98],
-  // --- T13-T14: right then left, running east along the base of the loop ---
-  [ -110, -106], [  -40,  -92], [   30, -104], [   92,  -86],
-  // --- T15: right-hander, swinging the car south ---
-  [  116,  -22], [  144,   18], [  150,   62],
-  // --- T15 -> T16 link: long left sweep back west while descending ---
-  [  128,  100], [   82,  122], [   24,  126], [  -36,  116],
-  // --- T16: slow left onto the main straight ---
-  [  -96,  130], [ -138,  156], [ -146,  181],
-  // --- short link into the pit straight, heading east ---
-  [ -108,  181],
+  // --- MAIN STRAIGHT: S/F heading east (+x), DRS zone, toward Turn 1 ---
+  [   15,   68], [   95,   66], [  174,   62],
+  // --- T1: sharp right off the straight, car turns south ---
+  [  232,   48], [  256,   66],
+  // --- T2: right, tightening, dropping toward the bottom of the map ---
+  [  268,  104],
+  // --- T3: long, slow, blind right hairpin onto the back straight ---
+  [  284,  150], [  270,  176], [  228,  184],
+  // --- BACK STRAIGHT: the long one (DRS zone), heading west ---
+  [  120,  178], [    0,  174], [ -120,  172],
+  // --- T4: heavy-braking left hairpin at the far end ---
+  [ -186,  176], [ -212,  148], [ -198,  116],
+  // --- diagonal run up into Sector 2 ---
+  [ -150,   96], [  -96,   56],
+  // --- T5: right ---
+  [  -66,   24],
+  // --- T6-T7: the Sector-2 chicane (right-left) ---
+  [  -50,  -12], [  -86,  -22],
+  // --- T8-T9: quick left-right ---
+  [ -140,  -18], [ -170,  -44],
+  // --- T10-T11-T12: the banked multi-apex "Currybolica" right, top-left ---
+  [ -238,  -70], [ -274, -110], [ -250, -158], [ -198, -172],
+  [ -150, -146], [ -132, -100],
+  // --- T13-T14: fast chicane, heading east across the top ---
+  [  -96,  -84], [  -52,  -90], [   -8,  -66],
+  // --- T15: right-hander, blind, swinging the car back south ---
+  [   30,  -44], [   36,   -6], [   14,   26],
+  // --- T16: 90-degree left onto the main straight ---
+  [  -30,   54], [  -60,   62],
 ]
 
 export interface TrackModel {
@@ -76,13 +79,16 @@ export interface TrackModel {
 
 const HALF_WIDTH = 7
 const SAMPLE_COUNT = 900
+// the anchors above are traced from the real circuit map at a compact scale;
+// blow them up so the straights are a proper stretch of road to drive
+const ANCHOR_SCALE = 1.45
 
 let cached: TrackModel | null = null
 
 export function getCircuit(): TrackModel {
   if (cached) return cached
 
-  const pts = ANCHORS.map(([x, z]) => new Vector3(x, 0, z))
+  const pts = ANCHORS.map(([x, z]) => new Vector3(x * ANCHOR_SCALE, 0, z * ANCHOR_SCALE))
   const curve = new CatmullRomCurve3(pts, true, 'catmullrom', 0.5)
 
   const samples = curve.getSpacedPoints(SAMPLE_COUNT)

@@ -23,7 +23,9 @@ export const KEY_MAP: Record<string, 'fwd' | 'back' | 'left' | 'right' | 'handbr
   KeyA: 'left',
   ArrowRight: 'right',
   KeyD: 'right',
-  Space: 'handbrake',
+  Space: 'back', // brake
+  ShiftLeft: 'handbrake',
+  ShiftRight: 'handbrake',
 }
 
 // Input contract: `steer` axis is +1 when the driver wants to go RIGHT, -1 for

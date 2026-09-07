@@ -33,10 +33,10 @@ export default function App() {
       <div className="overlay overlay--top-right">
         <div className="help">
           <div>
-            <kbd>W</kbd>/<kbd>↑</kbd> gas · <kbd>S</kbd>/<kbd>↓</kbd> brake · <kbd>A</kbd>/<kbd>D</kbd>/mouse steer · <kbd>Space</kbd> handbrake
+            <kbd>W</kbd>/<kbd>↑</kbd> gas · <kbd>S</kbd>/<kbd>↓</kbd>/<kbd>Space</kbd> brake · <kbd>A</kbd>/<kbd>D</kbd>/mouse steer · <kbd>Shift</kbd> handbrake
           </div>
           <div>
-            <kbd>C</kbd> camera · <kbd>T</kbd> time · <kbd>L</kbd> line · <kbd>G</kbd> ghost · <kbd>K</kbd> TCS · <kbd>R</kbd> restart · <kbd>P</kbd> pause
+            <kbd>C</kbd> camera · <kbd>T</kbd> time · <kbd>L</kbd> line · <kbd>G</kbd> ghost · <kbd>K</kbd> TCS · <kbd>M</kbd> sound · <kbd>R</kbd> restart · <kbd>P</kbd> pause
           </div>
         </div>
       </div>
