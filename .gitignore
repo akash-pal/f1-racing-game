@@ -37,3 +37,6 @@ poly/
 
 # root-level raw asset dump (not src/track)
 /track/
+
+# root-level raw asset dump
+/assets/

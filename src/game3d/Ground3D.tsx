@@ -3,15 +3,15 @@ import { RigidBody, CuboidCollider } from '@react-three/rapier'
 import { useLayoutEffect } from 'react'
 import { RepeatWrapping, SRGBColorSpace } from 'three'
 
-// The grass the whole circuit sits on: one large textured plane set just below
-// the road, plus a thick collider so a fast car can't tunnel through if it
-// leaves the island.
+// The grass the whole circuit sits on: one large textured plane (a seamless
+// tile built from Poly Haven "grass_medium_01" blades) set just below the road,
+// plus a thick collider so a fast car can't tunnel through if it leaves.
 export function Ground3D() {
   const grass = useTexture('/textures/grass_diff.jpg')
 
   useLayoutEffect(() => {
     grass.wrapS = grass.wrapT = RepeatWrapping
-    grass.repeat.set(90, 90) // ~16 m tiles — big enough not to shimmer at range
+    grass.repeat.set(70, 70) // ~26 m tiles — big enough not to shimmer at range
     grass.anisotropy = 16
     grass.colorSpace = SRGBColorSpace
     grass.needsUpdate = true
@@ -24,7 +24,7 @@ export function Ground3D() {
         <planeGeometry args={[1800, 1800]} />
         <meshStandardMaterial
           map={grass}
-          color="#c7d1b6"
+          color="#e2e8d4"
           roughness={1}
           metalness={0}
           polygonOffset
