@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ghostHasData, ghostSampleAt } from '../car/ghost'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 import { useGameStore } from '../state/useGameStore'
 import { useLiveStore } from '../state/useLiveStore'
 
@@ -23,7 +23,7 @@ export function Minimap() {
     canvas.height = SIZE * dpr
     ctx.scale(dpr, dpr)
 
-    const track = getSilverstone()
+    const track = getCircuit()
     const b = track.bounds
     const span = Math.max(b.width, b.depth)
     const toXY = (x: number, z: number): [number, number] => [

@@ -1,9 +1,9 @@
-// Dev-only: dump the Silverstone centre-line + edges to an SVG for eyeballing.
+// Dev-only: dump the circuit centre-line + edges to an SVG for eyeballing.
 // Run: node --experimental-strip-types scripts/renderTrackSvg.ts
 import { writeFileSync } from 'node:fs'
-import { getSilverstone } from '../src/track/silverstone.ts'
+import { getCircuit } from '../src/track/circuit.ts'
 
-const t = getSilverstone()
+const t = getCircuit()
 const all = [...t.samples, ...t.leftEdge, ...t.rightEdge]
 const minX = Math.min(...all.map((p) => p.x))
 const maxX = Math.max(...all.map((p) => p.x))
@@ -26,7 +26,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
 <path d="${path([...t.leftEdge, ...[...t.rightEdge].reverse()])}" fill="#3b3f45" stroke="none" opacity="0.9"/>
 <path d="${path(t.samples)}" fill="none" stroke="#e0c060" stroke-width="1.4" stroke-dasharray="6 6"/>
 <circle cx="${tx(t.start.position).toFixed(1)}" cy="${tz(t.start.position).toFixed(1)}" r="6" fill="#e8e8e8"/>
-<text x="10" y="20" fill="#fff" font-family="sans-serif" font-size="14">Silverstone — ${(t.length / 1000).toFixed(2)} km/lap, width ${(t.halfWidth * 2).toFixed(0)}u</text>
+<text x="10" y="20" fill="#fff" font-family="sans-serif" font-size="14">Buddh Int'l Circuit — ${(t.length / 1000).toFixed(2)} km/lap, width ${(t.halfWidth * 2).toFixed(0)}u</text>
 </svg>`
 
 const outPath = process.argv[2] ?? '/tmp/track.svg'

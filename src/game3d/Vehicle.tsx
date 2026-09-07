@@ -4,7 +4,7 @@ import { useEffect, useRef, type RefObject } from 'react'
 import { Vector3, Quaternion, type Group } from 'three'
 import { KMH_PER_MS, WHEEL_POSITIONS } from '../lib/constants'
 import { pseudoGear } from '../lib/pseudoGear'
-import { spawn3D, getSilverstone } from '../track/silverstone'
+import { spawn3D, getCircuit } from '../track/circuit'
 import { F1Car } from '../car/F1Car'
 import { ghostCommitLap, ghostRecordFrame, ghostStartRecording } from '../car/ghost'
 import { useLapTimer } from '../hooks/useLapTimer'
@@ -24,7 +24,7 @@ interface Props {
 const Y_AXIS = new Vector3(0, 1, 0)
 const spawnQuat = new Quaternion()
 const SPAWN = spawn3D()
-const track = getSilverstone()
+const track = getCircuit()
 
 function Tyre({ radius }: { radius: number }) {
   return (

@@ -2,10 +2,10 @@ import { Line } from '@react-three/drei'
 import { RigidBody } from '@react-three/rapier'
 import { useMemo } from 'react'
 import { DoubleSide, Vector3 } from 'three'
-import { getSilverstone } from './silverstone'
+import { getCircuit } from './circuit'
 import { buildKerbGeometries, buildRoadGeometry, buildWallGeometry } from './trackMesh'
 
-// The Silverstone circuit in 3D: tarmac ribbon + red/white kerbs + a
+// The Buddh International Circuit in 3D: tarmac ribbon + red/white kerbs + a
 // start/finish line + Armco-style barriers on BOTH sides (with trimesh colliders
 // that keep the car on the island and give the scene real depth).
 
@@ -13,7 +13,7 @@ const WALL_HEIGHT = 2.1
 const WALL_OFFSET = 1.4 // how far outside the painted edge the barrier sits
 
 export function Track3D() {
-  const track = getSilverstone()
+  const track = getCircuit()
 
   const road = useMemo(() => buildRoadGeometry(0.02), [])
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
@@ -26,7 +26,7 @@ export function Track3D() {
 
   // bright rails riding the top of each barrier (visual depth cue)
   const [leftRail, rightRail] = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     const rail = (edge: Vector3[]) =>
       edge.map((e, i) => {
         const out = new Vector3().copy(e).sub(t.samples[i]).setY(0).normalize()

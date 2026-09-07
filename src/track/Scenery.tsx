@@ -1,7 +1,7 @@
 import { Instance, Instances } from '@react-three/drei'
 import { useMemo } from 'react'
 import { Vector3 } from 'three'
-import { getSilverstone } from './silverstone'
+import { getCircuit } from './circuit'
 
 // Trackside scenery: pine trees, grandstands (with a speckled crowd),
 // advertising hoardings and tyre stacks. All placed procedurally from the
@@ -20,7 +20,7 @@ function mulberry32(seed: number) {
 // ---------- trees ----------
 function Trees() {
   const items = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     const rand = mulberry32(1337)
     const out: { pos: [number, number, number]; s: number; tint: number }[] = []
     const { minX, maxX, minZ, maxZ } = t.bounds
@@ -128,7 +128,7 @@ function Grandstand({
 // ---------- hoardings + tyre stacks ----------
 function TracksideProps() {
   const { tyreClusters } = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     const n = t.samples.length
     const up = new Vector3(0, 1, 0)
     const tc: [number, number, number][] = []
@@ -176,7 +176,7 @@ function TracksideProps() {
 
 export function Scenery() {
   const stands = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     const n = t.samples.length
     const up = new Vector3(0, 1, 0)
     // place stands on the straighter parts, pushed far enough out that they
@@ -184,8 +184,8 @@ export function Scenery() {
     const specs: { frac: number; side: 1 | -1; width: number }[] = [
       { frac: 0.015, side: 1, width: 48 }, // main grandstand, pit straight
       { frac: 0.05, side: -1, width: 30 }, // opposite the pits
-      { frac: 0.2, side: 1, width: 34 }, // Hangar straight
-      { frac: 0.66, side: 1, width: 30 }, // Wellington return
+      { frac: 0.22, side: 1, width: 34 }, // back straight
+      { frac: 0.72, side: 1, width: 30 }, // Sector 3
     ]
     return specs.map((s) => {
       const i = Math.round(s.frac * n) % n

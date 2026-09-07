@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import type { Group, MeshStandardMaterial } from 'three'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 import { useGameStore } from '../state/useGameStore'
 import { countdownInfo, raceGo } from '../hooks/useRaceControl'
 
@@ -9,7 +9,7 @@ import { countdownInfo, raceGo } from '../hooks/useRaceControl'
 // clock from the game store; hides itself a moment after GO.
 
 export function StartLights() {
-  const start = getSilverstone().start
+  const start = getCircuit().start
   const bulbs = useRef<(MeshStandardMaterial | null)[]>([])
   const groupRef = useRef<Group>(null)
 

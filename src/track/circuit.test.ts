@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getSilverstone, makeFinishLine, spawn2D, spawn3D } from './silverstone'
+import { getCircuit, makeFinishLine, spawn2D, spawn3D } from './circuit'
 
-describe('Silverstone track model', () => {
-  const t = getSilverstone()
+describe('Buddh circuit model', () => {
+  const t = getCircuit()
 
   it('is a closed loop of a sensible length', () => {
     expect(t.length).toBeGreaterThan(1200)

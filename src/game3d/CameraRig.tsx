@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, type RefObject } from 'react'
 import type { RapierRigidBody } from '@react-three/rapier'
 import { PerspectiveCamera as ThreePerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { dampTowards } from '../lib/math'
-import { spawn3D } from '../track/silverstone'
+import { spawn3D } from '../track/circuit'
 import { useGameStore } from '../state/useGameStore'
 
 const SPAWN = spawn3D()

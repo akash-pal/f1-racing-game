@@ -1,7 +1,7 @@
 import { Line } from '@react-three/drei'
 import { useMemo } from 'react'
 import { Color, Vector3 } from 'three'
-import { getSilverstone } from './silverstone'
+import { getCircuit } from './circuit'
 
 // GT-style guide line down the middle of the track, coloured by how hard the
 // next bit of track is: green = flat out, amber = lift/turn-in, red = brake.
@@ -9,7 +9,7 @@ import { getSilverstone } from './silverstone'
 
 export function RacingLine() {
   const { points, colors } = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     const n = t.samples.length
     const pts: Vector3[] = []
     const cols: [number, number, number][] = []

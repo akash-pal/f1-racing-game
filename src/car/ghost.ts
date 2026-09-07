@@ -15,7 +15,7 @@ export interface GhostFrame {
   qw: number
 }
 
-const STORAGE_KEY = 'ghost:silverstone:v1'
+const STORAGE_KEY = 'ghost:buddh:v1'
 const MIN_FRAME_GAP = 40 // ms
 
 let recording: GhostFrame[] = []

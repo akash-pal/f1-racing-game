@@ -1,12 +1,12 @@
 import { BufferAttribute, BufferGeometry, Vector3 } from 'three'
-import { getSilverstone } from './silverstone'
+import { getCircuit } from './circuit'
 
 // Geometry builders for the circuit. All pure — return BufferGeometry the R3F
 // components memoize and render.
 
 /** Flat road ribbon between the left and right edges, lying at y = `y`. */
 export function buildRoadGeometry(y = 0.02): BufferGeometry {
-  const { leftEdge, rightEdge } = getSilverstone()
+  const { leftEdge, rightEdge } = getCircuit()
   const n = leftEdge.length
   const positions = new Float32Array(n * 2 * 3)
   const normals = new Float32Array(n * 2 * 3)
@@ -41,7 +41,7 @@ export function buildRoadGeometry(y = 0.02): BufferGeometry {
  * out from the centre-line, rising to `height`.
  */
 export function buildWallGeometry(side: 'left' | 'right', offset: number, height: number): BufferGeometry {
-  const track = getSilverstone()
+  const track = getCircuit()
   const edge = side === 'left' ? track.leftEdge : track.rightEdge
   const center = track.samples
   const n = edge.length
@@ -78,11 +78,11 @@ export function buildWallGeometry(side: 'left' | 'right', offset: number, height
 }
 
 /**
- * Kerb strips hugging the inside of both edges, split into two geometries by
- * segment parity so a red/white stripe comes from two draw calls.
+ * Kerb strips — ONLY at corners (per the circuit's isCorner mask), hugging both
+ * edges. Split into two geometries by segment parity for the red/white stripe.
  */
 export function buildKerbGeometries(width = 1.4): [BufferGeometry, BufferGeometry] {
-  const track = getSilverstone()
+  const track = getCircuit()
   const n = track.samples.length
   const inward = new Vector3()
 
@@ -92,6 +92,7 @@ export function buildKerbGeometries(width = 1.4): [BufferGeometry, BufferGeometr
     let v = 0
     for (let i = 0; i < n - 1; i++) {
       if (i % 2 !== parity) continue
+      if (!track.isCorner[i]) continue // straights get no kerb
       for (const edge of [track.leftEdge, track.rightEdge]) {
         inward.copy(track.samples[i]).sub(edge[i]).setY(0).normalize()
         const y = 0.05

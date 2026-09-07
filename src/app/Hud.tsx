@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 import { countdownInfo, raceGo } from '../hooks/useRaceControl'
 import { useGameStore } from '../state/useGameStore'
 import { useHudStore } from '../state/useHudStore'
@@ -41,7 +41,7 @@ export function Hud() {
 
   useEffect(() => {
     if (!showRace) return
-    const track = getSilverstone()
+    const track = getCircuit()
     let raf = 0
     let lastBanner = ''
     const tick = () => {

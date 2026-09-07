@@ -1,37 +1,42 @@
 import { CatmullRomCurve3, Vector2, Vector3 } from 'three'
 
-// A recognisable Silverstone-shaped closed circuit.
-//
-// These are hand-authored anchor points tracing the circuit's outline (not
-// surveyed data) — the fast Copse / Maggotts-Becketts esses along the top, the
-// Hangar straight down the right, Stowe / Vale / Club into the pit straight, then
-// Abbey and the Brooklands / Village hairpin bulge on the left. Coordinates are
-// game units in the ground plane: +x east, +z south. One lap ~ 1.9 km.
+// A stylised Buddh International Circuit (Indian GP) — hand-authored anchor
+// points, not surveyed data: the long main straight and T1 downhill right, the
+// T3 parabolic hairpin, the back straight to T4, the Sector-2 esses up the west
+// side, the huge double-apex T10-11-12 left, then T13-16 through the stadium
+// back onto the straight. Coordinates: +x east, +z south. ~16 corners.
 
 // prettier-ignore
 const ANCHORS: [number, number][] = [
-  // --- start/finish + pit straight (dead straight, heading east +x) ---
-  [  -70,  206], [   30,  206], [  130,  206],
-  // --- Club / Vale (SE), sweeping right then left up the east side ---
-  [  210,  188], [  256,  140], [  272,   80], [  270,   20],
-  // --- east side / Hangar Straight (heading north) ---
-  [  256,  -40], [  230, -100],
-  // --- Stowe (NE), turning west along the top ---
-  [  188, -146], [  120, -168],
-  // --- Maggotts / Becketts / Chapel: shallow S along the north edge ---
-  [   68, -150], [   28, -178], [  -30, -180], [  -95, -158],
-  // --- Copse (NW), turning down toward the west point ---
-  [ -160, -122], [ -215,  -70],
-  // --- Wellington Straight, running west out to the far point ---
-  [ -250,  -30], [ -278,    6],
-  // --- The Loop: tight ~180° left hairpin at the western extreme ---
-  [ -282,   46], [ -254,   74], [ -214,   66],
-  // --- Aintree, the return leg running back east, well south of Wellington ---
-  [ -172,   48], [ -134,   42], [  -98,   46],
-  // --- long, open left sweeping up the west side of the infield ---
-  [  -74,   72], [  -66,  116], [  -92,  140],
-  // --- final corner: a smooth ~100 deg left onto the pit straight (no cusp) ---
-  [ -105,  171], [  -95,  196],
+  // --- main straight, from S/F heading east (+x) toward Turn 1 (dead flat) ---
+  [  -60,  181], [   70,  181], [  185,  181],
+  // --- T1: downhill right off the end of the straight ---
+  [  252,  168], [  300,  150],
+  // --- T2: long right, heading round to the south ---
+  [  332,  120], [  342,  155],
+  // --- T3: long parabolic right hairpin sweeping onto the back straight ---
+  [  335,  195], [  305,  225], [  258,  240],
+  // --- back straight (2nd DRS zone), heading west (-x) ---
+  [  130,  245], [  -20,  246], [ -165,  243],
+  // --- T4: hard braking left at the west end ---
+  [ -240,  230], [ -286,  196], [ -288,  156],
+  // --- T5-T6: quick right-left ---
+  [ -262,  124], [ -222,  104], [ -198,   66],
+  // --- T7-T8-T9: Sector-2 esses ---
+  [ -200,   30], [ -186,   -2], [ -180,  -30],
+  // --- T10-T11-T12: the huge double-apex left, hanging south-west ---
+  [ -232,  -42], [ -292,  -34], [ -334,  -74], [ -324, -122],
+  [ -272, -146], [ -210, -132], [ -172,  -98],
+  // --- T13-T14: right then left, running east along the base of the loop ---
+  [ -110, -106], [  -40,  -92], [   30, -104], [   92,  -86],
+  // --- T15: right-hander, swinging the car south ---
+  [  116,  -22], [  144,   18], [  150,   62],
+  // --- T15 -> T16 link: long left sweep back west while descending ---
+  [  128,  100], [   82,  122], [   24,  126], [  -36,  116],
+  // --- T16: slow left onto the main straight ---
+  [  -96,  130], [ -138,  156], [ -146,  181],
+  // --- short link into the pit straight, heading east ---
+  [ -108,  181],
 ]
 
 export interface TrackModel {
@@ -44,6 +49,10 @@ export interface TrackModel {
   /** Per-sample left/right edge points at ±halfWidth. */
   leftEdge: Vector3[]
   rightEdge: Vector3[]
+  /** Per-sample turn rate (radians of heading change per ~few samples). */
+  curvature: number[]
+  /** Per-sample flag: is this bit of track a corner (kerbs) vs a straight. */
+  isCorner: boolean[]
   /** Half the drivable width, game units. */
   halfWidth: number
   /** Total centre-line length. */
@@ -70,7 +79,7 @@ const SAMPLE_COUNT = 900
 
 let cached: TrackModel | null = null
 
-export function getSilverstone(): TrackModel {
+export function getCircuit(): TrackModel {
   if (cached) return cached
 
   const pts = ANCHORS.map(([x, z]) => new Vector3(x, 0, z))
@@ -93,6 +102,31 @@ export function getSilverstone(): TrackModel {
     const left = new Vector3().crossVectors(up, tan).normalize()
     leftEdge.push(new Vector3().copy(samples[i]).addScaledVector(left, HALF_WIDTH))
     rightEdge.push(new Vector3().copy(samples[i]).addScaledVector(left, -HALF_WIDTH))
+  }
+
+  // Per-sample local turn radius, used to decide where kerbs go: only the
+  // genuinely tight corners get kerbs — straights and flowing sweeps stay bare.
+  const n = samples.length
+  const seg = length / n
+  const LOOK = 5
+  const arc = LOOK * seg
+  const curvature: number[] = new Array(n)
+  for (let i = 0; i < n; i++) {
+    const a = tangents[i]
+    const b = tangents[(i + LOOK) % n]
+    const dot = Math.max(-1, Math.min(1, a.x * b.x + a.z * b.z))
+    curvature[i] = Math.acos(dot)
+  }
+  const RADIUS_MAX = 52 // game units — tighter than this counts as a "corner"
+  const PAD = 6 // bracket the apex with a little kerb on entry/exit
+  const radiusAt = (i: number) => (curvature[i] > 1e-4 ? arc / curvature[i] : Infinity)
+  const isCorner: boolean[] = new Array(n)
+  for (let i = 0; i < n; i++) {
+    let hot = false
+    for (let d = -PAD; d <= PAD && !hot; d++) {
+      if (radiusAt((i + d + n) % n) < RADIUS_MAX) hot = true
+    }
+    isCorner[i] = hot
   }
 
   let minX = Infinity
@@ -180,6 +214,8 @@ export function getSilverstone(): TrackModel {
     tangents,
     leftEdge,
     rightEdge,
+    curvature,
+    isCorner,
     halfWidth: HALF_WIDTH,
     length,
     bounds,
@@ -191,18 +227,18 @@ export function getSilverstone(): TrackModel {
 
 /** 2D polyline (x,z) of the centre-line for the top-down view. */
 export function centerlinePolyline2D(): Vector2[] {
-  return getSilverstone().samples.map((p) => new Vector2(p.x, p.z))
+  return getCircuit().samples.map((p) => new Vector2(p.x, p.z))
 }
 
 /** Spawn pose for the 2D arcade car (on the start/finish line, racing direction). */
 export function spawn2D(): { x: number; z: number; h: number } {
-  const s = getSilverstone().start
+  const s = getCircuit().start
   return { x: s.position.x, z: s.position.z, h: s.heading }
 }
 
 /** Spawn pose for the 3D car. */
 export function spawn3D(): { position: [number, number, number]; heading: number } {
-  const s = getSilverstone().start
+  const s = getCircuit().start
   return { position: [s.position.x, 1.0, s.position.z], heading: s.heading }
 }
 
@@ -212,7 +248,7 @@ export function spawn3D(): { position: [number, number, number]; heading: number
  * point is within the track's lateral width of the line.
  */
 export function makeFinishLine() {
-  const { start, halfWidth } = getSilverstone()
+  const { start, halfWidth } = getCircuit()
   const f = start.forward // along racing direction
   const p0 = start.position
   return {

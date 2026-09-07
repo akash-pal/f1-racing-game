@@ -2,17 +2,17 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrthographicCamera } from '@react-three/drei'
 import { useLayoutEffect, useRef } from 'react'
 import type { OrthographicCamera as ThreeOrthographicCamera } from 'three'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 import { Car2D } from './Car2D'
 import { Track2D } from './Track2D'
 
 // Phase 2: top-down 2D prototype. Orthographic camera straight down, framed to
-// fit the whole Silverstone outline. The arcade car (no physics engine) drives.
+// fit the whole circuit outline. The arcade car (no physics engine) drives.
 
 function FitCamera() {
   const camRef = useRef<ThreeOrthographicCamera>(null)
   const size = useThree((s) => s.size)
-  const b = getSilverstone().bounds
+  const b = getCircuit().bounds
 
   useLayoutEffect(() => {
     const cam = camRef.current

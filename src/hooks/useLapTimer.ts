@@ -1,8 +1,8 @@
 import { useRef } from 'react'
-import { makeFinishLine } from '../track/silverstone'
+import { makeFinishLine } from '../track/circuit'
 import { useHudStore } from '../state/useHudStore'
 
-// Shared lap timing for the Silverstone circuit (2D and 3D).
+// Shared lap timing for the circuit (2D and 3D).
 //
 // The start/finish line is perpendicular to the racing direction at the spawn
 // point. A lap counts when the car crosses that line moving forwards (signed

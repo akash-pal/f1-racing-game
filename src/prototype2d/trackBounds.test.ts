@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { sampleTrack } from './trackBounds'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 
-describe('sampleTrack (Silverstone)', () => {
-  const track = getSilverstone()
+describe('sampleTrack (Buddh circuit)', () => {
+  const track = getCircuit()
 
   it('the centre-line is on track with full grip', () => {
     for (const i of [0, 100, 250, 450, 700]) {

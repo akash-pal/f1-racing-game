@@ -1,31 +1,31 @@
 import { Line } from '@react-three/drei'
 import { useMemo } from 'react'
 import { DoubleSide, Vector3 } from 'three'
-import { getSilverstone } from '../track/silverstone'
+import { getCircuit } from '../track/circuit'
 import { buildKerbGeometries, buildRoadGeometry } from '../track/trackMesh'
 
-// Top-down Silverstone outline for the 2D prototype. Same centre-line and edges
+// Top-down circuit outline for the 2D prototype. Same centre-line and edges
 // as the 3D scene — the tarmac ribbon, kerbs, edge lines and barrier lines
 // (offset just outside each edge) that give the "3D" track its footprint.
 
 const BARRIER_OFFSET = 1.2
 
 export function Track2D() {
-  const track = getSilverstone()
+  const track = getCircuit()
   const road = useMemo(() => buildRoadGeometry(0.0), [])
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
 
   const flat = (pts: Vector3[], y = 0.03) => pts.map((p) => new Vector3(p.x, y, p.z))
 
   const outerBarrier = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     return t.leftEdge.map((e, i) => {
       const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
       return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)
     })
   }, [])
   const innerBarrier = useMemo(() => {
-    const t = getSilverstone()
+    const t = getCircuit()
     return t.rightEdge.map((e, i) => {
       const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
       return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)

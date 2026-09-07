@@ -15,7 +15,7 @@ import { StartLights } from './StartLights'
 import { Vehicle } from './Vehicle'
 import { useVehicleTuning } from './vehicleConfig'
 
-// 3D driving: Rapier raycast vehicle on the Silverstone circuit, with scenery,
+// 3D driving: Rapier raycast vehicle on the Buddh International Circuit, with scenery,
 // grandstands, time-of-day lighting, a start-light countdown, a best-lap ghost,
 // a racing-line assist and four camera views.
 
