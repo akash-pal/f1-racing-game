@@ -30,13 +30,19 @@ function wedgeGeometry(length: number, depth: number, h: number): BufferGeometry
 }
 
 // Trackside grandstands, named and placed to match the Buddh International
-// Circuit spectator map. Yellow stands are a raked concrete bank with a
-// cantilever roof; the green "picnic"/"natural" stands are grassy banks. Every
-// stand has a fixed collider so the car can't drive through it. Spectators are
-// one shared instanced mesh.
+// Circuit spectator map. The built stands are modelled on a typical F1
+// grandstand (cf. Sketchfab "Grandstand Type 1"): stepped concrete seating
+// terraces with coloured seat bands, an open steel back frame with diagonal
+// bracing, and a cantilever roof with a fascia banner. The green "picnic" /
+// "natural" stands stay grassy banks. Every stand has a fixed collider so the
+// car can't drive through it; spectators are one shared instanced mesh.
 
 const BANK_HEIGHT = 8
 const GRASS_HEIGHT = 4
+const STEEL = '#3b3f45'
+const CONCRETE = '#8d9196'
+const SEAT = '#23509c'
+const FASCIA = '#e2c14e'
 
 const CROWD_COLORS = ['#d94f4f', '#e0c05a', '#5a7fd0', '#e8e8e8', '#4fae72', '#c8763f', '#8a8f97']
 
@@ -55,18 +61,21 @@ function buildCrowd(stands: PlacedGrandstand[]): Person[] {
   const world = new Vector3()
 
   for (const s of stands) {
-    const h = s.kind === 'grass' ? GRASS_HEIGHT : BANK_HEIGHT
-    const density = s.kind === 'grass' ? 0.5 : 0.22 // grass banks are sparser
+    const grass = s.kind === 'grass'
+    const h = grass ? GRASS_HEIGHT : BANK_HEIGHT
+    const density = grass ? 0.5 : 0.24
     q.setFromEuler(e.set(0, s.rotY, 0))
     m.makeRotationFromQuaternion(q).setPosition(s.cx, 0, s.cz)
-    const cols = Math.max(6, Math.floor(s.length / 1.6))
-    const rows = s.kind === 'grass' ? 5 : 7
+    const cols = Math.max(6, Math.floor(s.length / 1.5))
+    const rows = grass ? 5 : Math.min(9, Math.max(5, Math.round(s.depth / 1.15)))
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
         if (Math.random() < density) continue
+        const f = rows === 1 ? 0.5 : r / (rows - 1)
         const lx = -s.length / 2 + 0.9 + (c / (cols - 1)) * (s.length - 1.8)
-        const lz = -s.depth / 2 + 2 + (r / (rows - 1)) * (s.depth - 3)
-        const ly = 0.8 + (r / (rows - 1)) * (h - 1.4)
+        // sit them on the terrace treads (or the grass slope)
+        const lz = grass ? -s.depth / 2 + 2 + f * (s.depth - 3) : -s.depth / 2 + (r + 0.55) * (s.depth / rows) // prettier-ignore
+        const ly = grass ? 0.8 + f * (h - 1.4) : (r + 0.95) * (h / rows)
         local.set(lx + (Math.random() - 0.5) * 0.6, ly, lz)
         world.copy(local).applyMatrix4(m)
         crowd.push({
@@ -80,59 +89,122 @@ function buildCrowd(stands: PlacedGrandstand[]): Person[] {
   return crowd
 }
 
-function Stand({ cx, cz, rotY, length, depth, kind }: PlacedGrandstand) {
-  const postXs = useMemo(() => {
-    const k = Math.max(2, Math.round(length / 16))
-    return Array.from({ length: k }, (_, i) => -length / 2 + 2 + (i / (k - 1)) * (length - 4))
-  }, [length])
-  const wedge = useMemo(
-    () => (kind === 'grass' ? wedgeGeometry(length, depth, GRASS_HEIGHT) : null),
-    [kind, length, depth],
+function GrassBank({ cx, cz, rotY, length, depth }: PlacedGrandstand) {
+  const wedge = useMemo(() => wedgeGeometry(length, depth, GRASS_HEIGHT), [length, depth])
+  return (
+    <RigidBody type="fixed" colliders={false} position={[cx, 0, cz]} rotation={[0, rotY, 0]}>
+      {/* a shallow collider so you can't drive up onto the picnic bank */}
+      <CuboidCollider args={[length / 2, 1.6, depth / 2]} position={[0, 1.4, 0]} />
+      <mesh geometry={wedge} receiveShadow castShadow>
+        <meshStandardMaterial color="#4e7a3c" roughness={1} />
+      </mesh>
+      <mesh position={[0, 0.45, -depth / 2 + 0.25]} castShadow receiveShadow>
+        <boxGeometry args={[length, 0.9, 0.4]} />
+        <meshStandardMaterial color="#5a5f66" roughness={0.9} />
+      </mesh>
+    </RigidBody>
   )
+}
 
-  if (kind === 'grass' && wedge) {
-    return (
-      <RigidBody type="fixed" colliders={false} position={[cx, 0, cz]} rotation={[0, rotY, 0]}>
-        {/* a shallow collider so you can't drive up onto the picnic bank */}
-        <CuboidCollider args={[length / 2, 1.6, depth / 2]} position={[0, 1.4, 0]} />
-        {/* grassy spectator bank, rising away from the track */}
-        <mesh geometry={wedge} receiveShadow castShadow>
-          <meshStandardMaterial color="#4e7a3c" roughness={1} />
-        </mesh>
-        {/* low retaining wall at the front */}
-        <mesh position={[0, 0.45, -depth / 2 + 0.25]} castShadow receiveShadow>
-          <boxGeometry args={[length, 0.9, 0.4]} />
-          <meshStandardMaterial color="#5a5f66" roughness={0.9} />
-        </mesh>
-      </RigidBody>
+function Stand({ cx, cz, rotY, length, depth, kind }: PlacedGrandstand) {
+  const geo = useMemo(() => {
+    if (kind === 'grass') return null
+    const steps = Math.min(9, Math.max(5, Math.round(depth / 1.15)))
+    const stepD = depth / steps
+    const stepH = BANK_HEIGHT / steps
+    const nCol = Math.min(9, Math.max(3, Math.round(length / 12)))
+    const colH = BANK_HEIGHT + 3
+    const colZ = depth / 2 - 0.3
+    const colXs = Array.from({ length: nCol }, (_, i) =>
+      nCol === 1 ? 0 : -length / 2 + (i / (nCol - 1)) * length,
     )
-  }
+    // one diagonal brace per bay, alternating direction
+    const bayW = length / Math.max(1, nCol - 1)
+    const braceLen = Math.hypot(bayW, colH)
+    const braceAng = Math.atan2(colH, bayW)
+    const braces = colXs.slice(0, -1).map((x, i) => ({
+      x: x + bayW / 2,
+      rot: (i % 2 === 0 ? 1 : -1) * braceAng,
+      len: braceLen,
+    }))
+    // three roof struts, back column top -> roof front
+    const strutLen = Math.hypot(depth + 1, 2)
+    const strutAng = Math.atan2(2, depth + 1)
+    const strutXs = [-length / 2 + length * 0.15, 0, length / 2 - length * 0.15]
+    return { steps, stepD, stepH, colH, colZ, colXs, braces, strutLen, strutAng, strutXs }
+  }, [kind, length, depth])
+
+  if (kind === 'grass') return <GrassBank {...{ cx, cz, rotY, length, depth, kind, name: '' }} />
+  if (!geo) return null
+  const { steps, stepD, stepH, colH, colZ, colXs, braces, strutLen, strutAng, strutXs } = geo
 
   return (
     <RigidBody type="fixed" colliders={false} position={[cx, 0, cz]} rotation={[0, rotY, 0]}>
       <CuboidCollider args={[length / 2, BANK_HEIGHT / 2, depth / 2]} position={[0, BANK_HEIGHT / 2, 0]} />
-      {/* raked seating bank */}
-      <mesh position={[0, BANK_HEIGHT / 2 - 0.5, 0]} rotation={[-0.34, 0, 0]} castShadow receiveShadow>
-        <boxGeometry args={[length, BANK_HEIGHT, depth]} />
-        <meshStandardMaterial color="#9a9ea3" roughness={0.95} />
+
+      {/* stepped seating terraces + coloured seat bands */}
+      {Array.from({ length: steps }, (_, i) => {
+        const y = (i + 0.5) * stepH
+        const z = -depth / 2 + (i + 0.5) * stepD
+        return (
+          <group key={i}>
+            <mesh position={[0, y, z]} castShadow receiveShadow>
+              <boxGeometry args={[length, stepH * 1.3, stepD * 0.98]} />
+              <meshStandardMaterial color={CONCRETE} roughness={0.95} />
+            </mesh>
+            <mesh position={[0, (i + 1) * stepH + 0.06, z + stepD * 0.05]}>
+              <boxGeometry args={[length * 0.98, 0.16, stepD * 0.62]} />
+              <meshStandardMaterial color={SEAT} roughness={0.8} />
+            </mesh>
+          </group>
+        )
+      })}
+
+      {/* front concourse wall */}
+      <mesh position={[0, 0.9, -depth / 2 - 0.1]} castShadow receiveShadow>
+        <boxGeometry args={[length + 0.6, 1.8, 0.6]} />
+        <meshStandardMaterial color="#33383e" roughness={0.9} />
       </mesh>
-      {/* front wall / advertising band, track side */}
-      <mesh position={[0, 0.8, -depth / 2 + 0.3]} castShadow receiveShadow>
-        <boxGeometry args={[length, 1.6, 0.5]} />
-        <meshStandardMaterial color="#e0c05a" roughness={0.7} />
-      </mesh>
-      {/* roof */}
-      <mesh position={[0, BANK_HEIGHT + 3.2, depth * 0.1]} rotation={[-0.12, 0, 0]} castShadow>
-        <boxGeometry args={[length + 3, 0.5, depth + 3]} />
-        <meshStandardMaterial color="#c9ccd0" roughness={0.7} metalness={0.1} />
-      </mesh>
-      {/* roof posts at the back */}
-      {postXs.map((x, i) => (
-        <mesh key={i} position={[x, (BANK_HEIGHT + 3) / 2, depth / 2 + 0.8]} castShadow>
-          <boxGeometry args={[0.5, BANK_HEIGHT + 3, 0.5]} />
-          <meshStandardMaterial color="#6a6f76" roughness={0.8} />
+
+      {/* open steel back frame: columns + diagonal bracing */}
+      {colXs.map((x, i) => (
+        <mesh key={`c${i}`} position={[x, colH / 2, colZ]} castShadow>
+          <boxGeometry args={[0.4, colH, 0.4]} />
+          <meshStandardMaterial color={STEEL} roughness={0.6} metalness={0.4} />
         </mesh>
       ))}
+      {braces.map((b, i) => (
+        <mesh key={`b${i}`} position={[b.x, colH / 2, colZ]} rotation={[0, 0, b.rot]} castShadow>
+          <boxGeometry args={[b.len, 0.18, 0.18]} />
+          <meshStandardMaterial color={STEEL} roughness={0.6} metalness={0.4} />
+        </mesh>
+      ))}
+      {/* horizontal tie along the top of the columns */}
+      <mesh position={[0, colH - 0.2, colZ]} castShadow>
+        <boxGeometry args={[length, 0.3, 0.3]} />
+        <meshStandardMaterial color={STEEL} roughness={0.6} metalness={0.4} />
+      </mesh>
+
+      {/* cantilever roof + struts + fascia banner */}
+      {strutXs.map((x, i) => (
+        <mesh
+          key={`s${i}`}
+          position={[x, colH + 1, -0.5]}
+          rotation={[strutAng, 0, 0]}
+          castShadow
+        >
+          <boxGeometry args={[0.28, 0.28, strutLen]} />
+          <meshStandardMaterial color={STEEL} roughness={0.6} metalness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, colH + 2, -0.5]} rotation={[-0.05, 0, 0]} castShadow>
+        <boxGeometry args={[length + 2, 0.35, depth + 5]} />
+        <meshStandardMaterial color="#26292e" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[0, colH + 1.6, -depth / 2 - 2]} castShadow>
+        <boxGeometry args={[length + 2.2, 1, 0.2]} />
+        <meshStandardMaterial color={FASCIA} roughness={0.6} />
+      </mesh>
     </RigidBody>
   )
 }
