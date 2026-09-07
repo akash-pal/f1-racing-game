@@ -89,9 +89,10 @@ export function CameraRig({ targetRef }: Props) {
     const speed = Math.hypot(lv.x, lv.y, lv.z)
 
     // road-feel shake: a faint jitter on smooth tarmac that grows with speed,
-    // a real shudder on the kerbs, coarser on the grass
+    // a real shudder on the kerbs, a faint texture on the grass (a big enough
+    // rough value there made the whole view flicker while parked on it)
     const live = useLiveStore.getState()
-    const rough = live.onKerb ? 1 : live.offTrack ? 0.45 : 0
+    const rough = live.onKerb ? 1 : live.offTrack ? 0.12 : 0
     const amt = (Math.min(1, speed / 46) * 0.22 + rough) * 0.07
     const nt = performance.now() * (0.02 + rough * 0.035)
     const shakeX = (Math.sin(nt * 1.7) + 0.5 * Math.sin(nt * 4.3)) * amt

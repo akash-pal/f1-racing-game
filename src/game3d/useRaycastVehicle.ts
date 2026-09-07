@@ -101,20 +101,27 @@ export function useRaycastVehicle(
       { tcs: game.assists.tcs, grip: gripRef.current },
     )
 
-    // --- surface vibration: a fast vertical shudder while a wheel is on a kerb
-    // (hard) or on the grass (softer) — a rattle you feel, not a hit that breaks
-    // the car loose. No lateral component (that read as "unstable").
-    if (!game.paused && raceGo() && (surf.onKerb || !surf.onTrack)) {
+    // --- surface vibration. No lateral component (that read as "unstable").
+    //  - kerb: a hard, fast vertical rattle you feel as you clip it. It flips
+    //    sign every step, but a kerb is over in a moment so that's fine.
+    //  - grass: a soft, low-frequency wallow. NOT the per-step sign flip — you
+    //    can sit on the grass for seconds, and at 30 Hz that read as the whole
+    //    screen flickering.
+    if (!game.paused && raceGo()) {
       const lv = chassis.linvel()
       const spd = Math.hypot(lv.x, lv.z)
-      if (spd > 3) {
+      if (surf.onKerb && spd > 3) {
         kerbTick.current++
         const buzz = (kerbTick.current % 2 === 0 ? 1 : -1) * (0.72 + 0.28 * Math.random())
         const t = Math.min(1, spd / 22)
-        const amp = surf.onKerb ? 120 + 260 * t : 45 + 120 * t
-        chassis.applyImpulse({ x: 0, y: buzz * amp, z: 0 }, true)
-        chassis.applyTorqueImpulse({ x: 0, y: buzz * (surf.onKerb ? 16 + 30 * t : 6 + 14 * t), z: 0 }, true)
-        if (surf.onKerb) gripRef.current = Math.min(gripRef.current, 0.9)
+        chassis.applyImpulse({ x: 0, y: buzz * (120 + 260 * t), z: 0 }, true)
+        chassis.applyTorqueImpulse({ x: 0, y: buzz * (16 + 30 * t), z: 0 }, true)
+        gripRef.current = Math.min(gripRef.current, 0.9)
+      } else if (!surf.onTrack && spd > 4) {
+        const t = Math.min(1, spd / 26)
+        const ph = performance.now() * 0.02 // ~3 Hz fundamental
+        const wob = Math.sin(ph) + 0.4 * Math.sin(ph * 2.7)
+        chassis.applyImpulse({ x: 0, y: wob * (18 + 42 * t), z: 0 }, true)
       }
     }
   })
