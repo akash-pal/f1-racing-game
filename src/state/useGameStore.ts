@@ -88,6 +88,11 @@ export const useGameStore = create<GameStore>()(
         assists: s.assists,
         soundOn: s.soundOn,
       }),
+      // the sandbox scene was removed — send anyone who had it selected to 3D
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<GameStore>
+        return { ...current, ...p, mode: p.mode === '2d' || p.mode === '3d' ? p.mode : '3d' }
+      },
     },
   ),
 )

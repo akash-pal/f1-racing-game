@@ -40,11 +40,11 @@ export function Track2D() {
         <meshBasicMaterial color="#e6e6e6" side={DoubleSide} />
       </mesh>
 
-      {/* grandstands (top-down blocks) */}
+      {/* grandstands (top-down blocks): yellow stands, green picnic banks */}
       {stands.map((s, i) => (
         <mesh key={i} position={[s.cx, 0.02, s.cz]} rotation={[-Math.PI / 2, 0, s.rotY]}>
           <planeGeometry args={[s.length, s.depth]} />
-          <meshBasicMaterial color="#8b8f96" side={DoubleSide} />
+          <meshBasicMaterial color={s.kind === 'grass' ? '#5aa544' : '#e0c05a'} side={DoubleSide} />
         </mesh>
       ))}
 

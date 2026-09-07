@@ -39,9 +39,9 @@ export function Game3D() {
           <Vehicle tuning={tuning} chassisRef={chassisRef} />
           <StartLights />
           <Scenery />
+          <Grandstands />
         </Physics>
 
-        <Grandstands />
         {racingLine && <RacingLine />}
         <GhostCar />
       </Suspense>

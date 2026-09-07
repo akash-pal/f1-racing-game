@@ -1,40 +1,52 @@
 import { getCircuit } from './circuit'
 
-// Where the grandstands sit, as fractions around the lap, matched to the Buddh
-// International Circuit map: the main-straight stand opposite the pits, T1, the
-// long BP1 stand down the back straight, T4, the SC1 bank, the BP2 chicane, the
-// BP3 "Currybolica" arc, and the T13-16 return. Shared by the 3D grandstands
-// and the 2D top-down markers so the two views stay in sync.
+// Grandstands around the circuit, named and placed to match the official Buddh
+// International Circuit spectator map. Each is positioned by a fraction around
+// the lap (racing direction from the start line) and whether it sits on the
+// outside or the inside of the track. The 3D scene and the 2D prototype both
+// read this so the two views stay in sync.
+
+export type StandKind = 'stand' | 'grass'
 
 export interface GrandstandSpec {
-  /** fraction around the lap from the start line, in the racing direction */
+  name: string
+  /** fraction around the lap from the start line, racing direction */
   t: number
-  /** +1 = spectator side is track-left, -1 = track-right */
-  side: 1 | -1
+  /** which side of the track the stand sits on */
+  side: 'out' | 'in'
   /** gap from the track edge to the front of the stand */
   gap: number
   /** stand length along the track */
   length: number
   /** stand depth (front-to-back) */
   depth: number
+  /** 'stand' = raked structure with a roof; 'grass' = a green spectator bank */
+  kind: StandKind
+  /** for a curved stand: number of segments and how far round the lap they span */
+  arc?: { segments: number; span: number }
 }
 
 export const GRANDSTAND_SPECS: GrandstandSpec[] = [
-  { t: 0.015, side: 1, gap: 16, length: 100, depth: 14 }, // main straight, opposite the pits
-  { t: 0.1, side: 1, gap: 13, length: 42, depth: 12 }, // Turn 1
-  { t: 0.185, side: 1, gap: 15, length: 46, depth: 12 }, // Turn 2-3
-  { t: 0.31, side: 1, gap: 18, length: 130, depth: 15 }, // BP1, down the back straight
-  { t: 0.4, side: 1, gap: 13, length: 40, depth: 12 }, // Turn 4
-  { t: 0.47, side: -1, gap: 13, length: 54, depth: 13 }, // SC1 diagonal bank
-  { t: 0.54, side: 1, gap: 12, length: 40, depth: 11 }, // BP2 chicane
-  { t: 0.65, side: 1, gap: 17, length: 84, depth: 14 }, // BP3 "Currybolica"
-  { t: 0.76, side: 1, gap: 16, length: 58, depth: 13 }, // Turn 13-14
-  { t: 0.84, side: 1, gap: 13, length: 44, depth: 12 }, // Turn 15
-  { t: 0.92, side: 1, gap: 12, length: 34, depth: 11 }, // Turn 16
+  { name: 'Main Grandstand', t: 0.025, side: 'in', gap: 16, length: 122, depth: 15, kind: 'stand' },
+  { name: 'Premium Grandstand North', t: 0.078, side: 'in', gap: 15, length: 46, depth: 13, kind: 'stand' }, // prettier-ignore
+  { name: 'Picnic Stand North', t: 0.12, side: 'out', gap: 18, length: 62, depth: 22, kind: 'grass' },
+  { name: 'Classic Grandstand North', t: 0.2, side: 'out', gap: 14, length: 46, depth: 12, kind: 'stand' },
+  { name: 'Star Grandstand 1 East', t: 0.285, side: 'out', gap: 16, length: 48, depth: 12, kind: 'stand' }, // prettier-ignore
+  { name: 'Star Grandstand 2 East', t: 0.365, side: 'out', gap: 14, length: 42, depth: 12, kind: 'stand' }, // prettier-ignore
+  { name: 'Star Grandstand 3 East', t: 0.43, side: 'out', gap: 13, length: 44, depth: 12, kind: 'stand' },
+  { name: 'Classic Grandstand 1 East', t: 0.462, side: 'out', gap: 13, length: 46, depth: 12, kind: 'stand' }, // prettier-ignore
+  { name: 'Classic Grandstand 2 East', t: 0.5, side: 'out', gap: 13, length: 48, depth: 13, kind: 'stand' },
+  { name: 'Natural Stand South', t: 0.56, side: 'out', gap: 15, length: 96, depth: 22, kind: 'grass' },
+  { name: 'Premium Grandstand South', t: 0.665, side: 'out', gap: 15, length: 32, depth: 13, kind: 'stand', arc: { segments: 4, span: 0.06 } }, // prettier-ignore
+  { name: 'Picnic Stand South/West', t: 0.72, side: 'in', gap: 22, length: 104, depth: 26, kind: 'grass' }, // prettier-ignore
+  { name: 'Classic Grandstand 1 West', t: 0.775, side: 'out', gap: 14, length: 48, depth: 13, kind: 'stand' }, // prettier-ignore
+  { name: 'Classic Grandstand 2 West', t: 0.83, side: 'out', gap: 13, length: 44, depth: 12, kind: 'stand' },
 ]
 
 export interface PlacedGrandstand {
-  /** centre of the stand footprint, world XZ */
+  name: string
+  kind: StandKind
+  /** centre of the footprint, world XZ */
   cx: number
   cz: number
   /** Y rotation so local +X runs along the track, +Z points away from it */
@@ -43,23 +55,47 @@ export interface PlacedGrandstand {
   depth: number
 }
 
-export function placedGrandstands(): PlacedGrandstand[] {
+function place(spec: GrandstandSpec, t: number): PlacedGrandstand {
   const track = getCircuit()
   const n = track.samples.length
-  return GRANDSTAND_SPECS.map((s) => {
-    const i = Math.min(n - 1, Math.max(0, Math.round(s.t * (n - 1))))
-    const p = track.samples[i]
-    const tan = track.tangents[i]
-    // unit normal (up x tan) = (tz, 0, -tx); spectator side is `side` along it
-    const nx = tan.z * s.side
-    const nz = -tan.x * s.side
-    const front = track.halfWidth + s.gap + s.depth / 2
-    return {
-      cx: p.x + nx * front,
-      cz: p.z + nz * front,
-      rotY: Math.atan2(nx, nz),
-      length: s.length,
-      depth: s.depth,
+  const i = Math.min(n - 1, Math.max(0, Math.round((((t % 1) + 1) % 1) * (n - 1))))
+  const p = track.samples[i]
+  const tan = track.tangents[i]
+  // the +normal (up x tan) = (tz, 0, -tx)
+  let nx = tan.z
+  let nz = -tan.x
+  // does +normal point away from the circuit centre? if not, flip so `side`
+  // is measured consistently as outside / inside of the track loop
+  const toCentreX = track.bounds.centerX - p.x
+  const toCentreZ = track.bounds.centerZ - p.z
+  const outward = nx * toCentreX + nz * toCentreZ < 0
+  if ((spec.side === 'out') !== outward) {
+    nx = -nx
+    nz = -nz
+  }
+  const front = track.halfWidth + spec.gap + spec.depth / 2
+  return {
+    name: spec.name,
+    kind: spec.kind,
+    cx: p.x + nx * front,
+    cz: p.z + nz * front,
+    rotY: Math.atan2(nx, nz),
+    length: spec.length,
+    depth: spec.depth,
+  }
+}
+
+export function placedGrandstands(): PlacedGrandstand[] {
+  const out: PlacedGrandstand[] = []
+  for (const spec of GRANDSTAND_SPECS) {
+    if (spec.arc) {
+      const { segments, span } = spec.arc
+      for (let k = 0; k < segments; k++) {
+        out.push(place(spec, spec.t + (k / (segments - 1) - 0.5) * span))
+      }
+    } else {
+      out.push(place(spec, spec.t))
     }
-  })
+  }
+  return out
 }

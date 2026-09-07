@@ -1,7 +1,7 @@
 // Shared types for the racing game.
 // Coordinate convention (see constants.ts): car forward = local -Z, up = +Y.
 
-export type Mode = 'menu' | 'sandbox' | '2d' | '3d'
+export type Mode = 'menu' | '2d' | '3d'
 
 /** Analog control axes, produced by keyboard now and the G29 wheel later. */
 export interface InputAxes {

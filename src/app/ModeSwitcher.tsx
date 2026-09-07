@@ -5,7 +5,6 @@ import type { Mode } from '../lib/types'
 // Flips the mounted scene via useGameStore.mode.
 
 const MODES: { id: Mode; label: string }[] = [
-  { id: 'sandbox', label: 'Sandbox' },
   { id: '2d', label: '2D Prototype' },
   { id: '3d', label: '3D Driving' },
 ]

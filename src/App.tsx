@@ -6,7 +6,6 @@ import { useKeyboardInput } from './hooks/useKeyboardInput'
 import { useRaceControl } from './hooks/useRaceControl'
 import { useResetOnKey } from './hooks/useResetOnKey'
 import { Prototype2D } from './prototype2d/Prototype2D'
-import { Sandbox } from './sandbox/Sandbox'
 import { Game3D } from './game3d/Game3D'
 import { useGameStore } from './state/useGameStore'
 
@@ -22,7 +21,6 @@ export default function App() {
 
   return (
     <div className="app">
-      {mode === 'sandbox' && <Sandbox />}
       {mode === '2d' && <Prototype2D />}
       {mode === '3d' && <Game3D />}
 
