@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
-import { Suspense, useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { Group, Vector3, Quaternion } from 'three'
 import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import {
@@ -12,7 +12,6 @@ import {
 import { pseudoGear } from '../lib/pseudoGear'
 import { spawn3D, getCircuit } from '../track/circuit'
 import { F1Car } from '../car/F1Car'
-import { F1CarModel } from '../car/F1CarModel'
 import { ghostCommitLap, ghostRecordFrame, ghostStartRecording } from '../car/ghost'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { raceGo } from '../hooks/useRaceControl'
@@ -78,30 +77,40 @@ function Wheels({
 
   return (
     <>
-      {WHEEL_VISUAL_POSITIONS.map((p, i) => (
-        <group key={i} ref={(el) => (steer.current[i] = el)} position={p}>
-          <group ref={(el) => (roll.current[i] = el)}>
-            <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-              <cylinderGeometry
-                args={[WHEEL_VISUAL_RADIUS, WHEEL_VISUAL_RADIUS, 0.38, 22]}
-              />
-              <meshStandardMaterial color="#0b0b0c" roughness={0.85} metalness={0} />
-            </mesh>
-            {/* rim / brake disc, so the spin is readable */}
-            <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry
-                args={[WHEEL_VISUAL_RADIUS * 0.55, WHEEL_VISUAL_RADIUS * 0.55, 0.4, 16]}
-              />
-              <meshStandardMaterial color="#2a2c30" metalness={0.7} roughness={0.35} />
-            </mesh>
-            {/* diametric spoke so the wheel's rotation is actually visible */}
-            <mesh>
-              <boxGeometry args={[0.44, WHEEL_VISUAL_RADIUS * 1.7, 0.05]} />
-              <meshStandardMaterial color="#3a3d42" metalness={0.5} roughness={0.5} />
-            </mesh>
+      {WHEEL_VISUAL_POSITIONS.map((p, i) => {
+        const R = WHEEL_VISUAL_RADIUS
+        const W = 0.34 // tyre width
+        const outboard = p[0] < 0 ? -1 : 1 // rim face points away from the car
+        return (
+          <group key={i} ref={(el) => (steer.current[i] = el)} position={p}>
+            <group ref={(el) => (roll.current[i] = el)}>
+              {/* slick tyre */}
+              <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+                <cylinderGeometry args={[R, R, W, 24]} />
+                <meshStandardMaterial color="#101011" roughness={0.9} metalness={0} />
+              </mesh>
+              {/* rim face on the outboard side, with a couple of spokes so the
+                  spin reads */}
+              <group position={[outboard * (W / 2 - 0.01), 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <mesh>
+                  <cylinderGeometry args={[R * 0.62, R * 0.62, 0.015, 18]} />
+                  <meshStandardMaterial color="#3a3d42" metalness={0.3} roughness={0.6} />
+                </mesh>
+                <mesh position={[0, 0.01, 0]}>
+                  <cylinderGeometry args={[R * 0.18, R * 0.18, 0.05, 10]} />
+                  <meshStandardMaterial color="#1c1d1f" metalness={0.4} roughness={0.55} />
+                </mesh>
+                {[0, 1, 2].map((k) => (
+                  <mesh key={k} position={[0, 0.012, 0]} rotation={[0, (k * Math.PI) / 3, 0]}>
+                    <boxGeometry args={[R * 1.05, 0.012, 0.045]} />
+                    <meshStandardMaterial color="#2a2c30" metalness={0.3} roughness={0.6} />
+                  </mesh>
+                ))}
+              </group>
+            </group>
           </group>
-        </group>
-      ))}
+        )
+      })}
     </>
   )
 }
@@ -256,9 +265,10 @@ export function Vehicle({ tuning, chassisRef }: Props) {
         friction={0.7}
       />
 
-      <Suspense fallback={<F1Car />}>
-        <F1CarModel />
-      </Suspense>
+      {/* The photoreal GLB bakes its wheels into the body mesh, so they can't be
+          spun without a doubled-up wheel showing through. Use the built-in F1
+          body, which is authored to take separate wheels. */}
+      <F1Car />
 
       <Wheels
         controllerRef={controllerRef}

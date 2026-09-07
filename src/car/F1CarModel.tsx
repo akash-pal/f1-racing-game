@@ -35,7 +35,7 @@ interface Props {
   opacity?: number
 }
 
-export function F1CarModel({ length = 5.9, opacity = 1 }: Props) {
+export function F1CarModel({ length = 6.6, opacity = 1 }: Props) {
   const { scene } = useGLTF(URL)
 
   // clone the graph AND the materials so the player car and the translucent

@@ -1,8 +1,7 @@
 import { useFrame } from '@react-three/fiber'
-import { Suspense, useRef } from 'react'
+import { useRef } from 'react'
 import type { Group } from 'three'
 import { F1Car } from '../car/F1Car'
-import { F1CarModel } from '../car/F1CarModel'
 import { ghostHasData, ghostSampleAt } from '../car/ghost'
 import { raceGo } from '../hooks/useRaceControl'
 import { useGameStore } from '../state/useGameStore'
@@ -34,9 +33,7 @@ export function GhostCar() {
 
   return (
     <group ref={groupRef} visible={false}>
-      <Suspense fallback={<F1Car primary="#8fd8ff" accent="#ffffff" dark="#3a63c0" opacity={0.32} />}>
-        <F1CarModel opacity={0.3} />
-      </Suspense>
+      <F1Car primary="#8fd8ff" accent="#ffffff" dark="#3a63c0" opacity={0.32} />
     </group>
   )
 }
