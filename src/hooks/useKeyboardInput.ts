@@ -9,8 +9,10 @@ import { useInputStore } from '../state/useInputStore'
 //   once in <App>, outside any <Canvas>, and keep working across scene switches.
 // - Steering: keyboard A/D (or ←/→) ramp the steer axis toward ±1. Moving the
 //   mouse steers by absolute horizontal position — pointer at the left edge =
-//   full left lock, centre = straight, right edge = full right. A key press
-//   overrides the mouse while held.
+//   full left lock, centre = straight, right edge = full right. Mouse steering
+//   only counts while the pointer is actually moving; once it's been still for
+//   MOUSE_IDLE_MS the wheel eases back to centre, so a parked cursor off to one
+//   side doesn't pull the car. A key press overrides the mouse while held.
 // - Contract: steer axis is +1 for RIGHT, -1 for LEFT (see constants STEER_SIGN).
 // - A window 'blur' handler clears held keys so a key can't get "stuck".
 
@@ -33,12 +35,14 @@ const isTyping = (): boolean => {
 }
 
 const MOUSE_DEADZONE = 0.08
+const MOUSE_IDLE_MS = 700 // mouse steering releases after the pointer stops moving
 
 export function useKeyboardInput(): void {
   useEffect(() => {
     const held = freshHeld()
     let mouseSteer = 0
-    let mouseActive = false
+    let mouseInWindow = false
+    let lastMouseMoveAt = -Infinity
     const RAMP = 8 // axis e-folds per second
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -55,7 +59,7 @@ export function useKeyboardInput(): void {
     }
     const onBlur = () => {
       Object.assign(held, freshHeld())
-      mouseActive = false
+      mouseInWindow = false
     }
     const onMouseMove = (e: MouseEvent) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1 // -1 .. 1
@@ -64,10 +68,11 @@ export function useKeyboardInput(): void {
       // lowpass the pointer position so hand tremor / sensor jitter near centre
       // doesn't turn into steering wobble
       mouseSteer += (raw - mouseSteer) * 0.3
-      mouseActive = true
+      mouseInWindow = true
+      lastMouseMoveAt = performance.now()
     }
     const onMouseLeave = () => {
-      mouseActive = false
+      mouseInWindow = false
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -88,6 +93,8 @@ export function useKeyboardInput(): void {
       // easing back to centre only very gently (like light caster) so the car
       // never "corrects itself" out from under you.
       const keySteer = (held.right ? 1 : 0) - (held.left ? 1 : 0)
+      // the mouse only steers while it's actually being moved
+      const mouseActive = mouseInWindow && now - lastMouseMoveAt < MOUSE_IDLE_MS
       const engaging = keySteer !== 0 || mouseActive
       const steerTarget = keySteer !== 0 ? keySteer : mouseActive ? mouseSteer : 0
       const steerRate = engaging ? 11 : 0.9
