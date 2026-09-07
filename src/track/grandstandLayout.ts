@@ -36,9 +36,9 @@ export const GRANDSTAND_SPECS: GrandstandSpec[] = [
   { name: 'Star Grandstand 3 East', t: 0.43, side: 'out', gap: 13, length: 44, depth: 12, kind: 'stand' },
   { name: 'Classic Grandstand 1 East', t: 0.462, side: 'out', gap: 13, length: 46, depth: 12, kind: 'stand' }, // prettier-ignore
   { name: 'Classic Grandstand 2 East', t: 0.5, side: 'out', gap: 13, length: 48, depth: 13, kind: 'stand' },
-  { name: 'Natural Stand South', t: 0.56, side: 'out', gap: 15, length: 96, depth: 22, kind: 'grass' },
+  { name: 'Natural Stand South', t: 0.55, side: 'out', gap: 14, length: 34, depth: 20, kind: 'grass', arc: { segments: 3, span: 0.05 } }, // prettier-ignore
   { name: 'Premium Grandstand South', t: 0.665, side: 'out', gap: 15, length: 32, depth: 13, kind: 'stand', arc: { segments: 4, span: 0.06 } }, // prettier-ignore
-  { name: 'Picnic Stand South/West', t: 0.72, side: 'in', gap: 22, length: 104, depth: 26, kind: 'grass' }, // prettier-ignore
+  { name: 'Picnic Stand South/West', t: 0.72, side: 'in', gap: 20, length: 34, depth: 22, kind: 'grass', arc: { segments: 4, span: 0.06 } }, // prettier-ignore
   { name: 'Classic Grandstand 1 West', t: 0.775, side: 'out', gap: 14, length: 48, depth: 13, kind: 'stand' }, // prettier-ignore
   { name: 'Classic Grandstand 2 West', t: 0.83, side: 'out', gap: 13, length: 44, depth: 12, kind: 'stand' },
 ]
@@ -53,6 +53,17 @@ export interface PlacedGrandstand {
   rotY: number
   length: number
   depth: number
+}
+
+/** nearest distance from (x,z) to any point on the centre-line */
+function distToTrack(x: number, z: number): number {
+  const s = getCircuit().samples
+  let best = Infinity
+  for (let i = 0; i < s.length; i += 2) {
+    const d = (s[i].x - x) ** 2 + (s[i].z - z) ** 2
+    if (d < best) best = d
+  }
+  return Math.sqrt(best)
 }
 
 function place(spec: GrandstandSpec, t: number): PlacedGrandstand {
@@ -73,13 +84,33 @@ function place(spec: GrandstandSpec, t: number): PlacedGrandstand {
     nx = -nx
     nz = -nz
   }
-  const front = track.halfWidth + spec.gap + spec.depth / 2
+  let front = track.halfWidth + spec.gap + spec.depth / 2
+  const rotY = Math.atan2(nx, nz)
+  // slide the stand out until its whole footprint clears the track — the
+  // centre-line can curve back under a stand placed tangent to one point
+  const minClear = track.halfWidth + 6
+  const half = spec.length / 2
+  const ax = nz // unit vector along the stand's length (perpendicular to the normal)
+  const az = -nx
+  for (let guard = 0; guard < 30; guard++) {
+    const cx = p.x + nx * front
+    const cz = p.z + nz * front
+    let worst = Infinity
+    for (let s = -1; s <= 1; s += 0.5) {
+      // front edge of the footprint, sampled along its length
+      const ex = cx + ax * half * s - nx * (spec.depth / 2)
+      const ez = cz + az * half * s - nz * (spec.depth / 2)
+      worst = Math.min(worst, distToTrack(ex, ez))
+    }
+    if (worst >= minClear) break
+    front += minClear - worst + 1
+  }
   return {
     name: spec.name,
     kind: spec.kind,
     cx: p.x + nx * front,
     cz: p.z + nz * front,
-    rotY: Math.atan2(nx, nz),
+    rotY,
     length: spec.length,
     depth: spec.depth,
   }
@@ -96,6 +127,9 @@ export function placedGrandstands(): PlacedGrandstand[] {
     } else {
       out.push(place(spec, spec.t))
     }
+  }
+  if (import.meta.env?.DEV) {
+    ;(globalThis as unknown as Record<string, unknown>).__grandstands = out
   }
   return out
 }

@@ -134,10 +134,10 @@ export function applyVehicleControls(
     for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, slip)
   }
 
-  // lateral grip: a touch more on the front axle so the car turns in cleanly
-  // instead of washing wide, rear slightly softer to keep the balance calm.
-  for (const i of FRONT_WHEELS) controller.setWheelSideFrictionStiffness(i, 1.15 * grip)
-  for (const i of REAR_WHEELS) controller.setWheelSideFrictionStiffness(i, 0.95 * grip)
+  // lateral grip: rear axle a little grippier than the front so the balance is
+  // a mild, stable understeer — the rear won't snap out on turn-in or a lift.
+  for (const i of FRONT_WHEELS) controller.setWheelSideFrictionStiffness(i, 1.05 * grip)
+  for (const i of REAR_WHEELS) controller.setWheelSideFrictionStiffness(i, 1.25 * grip)
 
   // steering: front only. Full lock and a quick rack at low speed (hairpins need
   // it); above ~14 m/s both the max angle AND how fast the rack moves scale down
@@ -148,12 +148,11 @@ export function applyVehicleControls(
   state.steer = moveTowards(state.steer, target, rack)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)
 
-  // --- yaw damping ---
-  // Bleed off yaw the steering isn't asking for. The reference yaw rate is the
-  // bicycle-model value the wheel angle implies, but CAPPED to a speed-scaled
-  // grip limit — without that cap the implied rate at speed is huge and the
-  // damper spins the car up into a snap-then-understeer. Damps hard when the car
-  // over-rotates, assists gently when it's below the reference. Weak under
+  // --- yaw damping (continuous) ---
+  // Pull the yaw rate toward the value the wheel angle implies, capped to a
+  // speed-scaled grip limit so it never targets an impossible rate. The gain
+  // ramps up SMOOTHLY the further the car has over-rotated past that reference —
+  // no hard switch, so there's no judder right at the limit. Weak under
   // handbrake so deliberate slides still rotate.
   const yawRate = chassis.angvel().y
   const stepScale = dt / (1 / 60)
@@ -163,9 +162,9 @@ export function applyVehicleControls(
   const yawCap = (grip * 22) / Math.max(12, speedAbs)
   const refYaw = clamp(impliedYaw, -yawCap, yawCap)
   const err = yawRate - refYaw
-  const overRotating = Math.abs(yawRate) > Math.abs(refYaw) && Math.sign(err) === Math.sign(yawRate)
-  const k = input.handbrake ? 6 : overRotating ? 30 : 12
-  chassis.applyTorqueImpulse({ x: 0, y: clamp(-err * k * stepScale, -150, 150), z: 0 }, true)
+  const excess = Math.max(0, Math.abs(yawRate) - Math.abs(refYaw))
+  const k = input.handbrake ? 6 + excess * 5 : 13 + excess * 42
+  chassis.applyTorqueImpulse({ x: 0, y: clamp(-err * k * stepScale, -160, 160), z: 0 }, true)
 
   controller.updateVehicle(dt)
 
