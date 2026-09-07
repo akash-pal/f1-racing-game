@@ -22,7 +22,11 @@ const RAW = {
   zMax: 2.76,
 }
 const RAW_LEN = RAW.xMax - RAW.xMin // ~10.9
-const GROUND_Y = -0.52 // where the tyres should rest (matches suspension travel)
+// visual tyre-bottom, measured from the chassis-body origin. The chassis rests
+// ~0.77 above the ground plane (connection point + suspension + wheel radius),
+// so this has to be ~-0.77 or the whole car visibly floats — most obvious on
+// the flat grass, where the contact shadow then sits in a gap under the car.
+const GROUND_Y = -0.78
 
 interface Props {
   /** target length in game units (nose tip to rear-wing tip) */
@@ -31,7 +35,7 @@ interface Props {
   opacity?: number
 }
 
-export function F1CarModel({ length = 6.6, opacity = 1 }: Props) {
+export function F1CarModel({ length = 5.9, opacity = 1 }: Props) {
   const { scene } = useGLTF(URL)
 
   // clone the graph AND the materials so the player car and the translucent

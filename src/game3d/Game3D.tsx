@@ -3,6 +3,7 @@ import { Physics } from '@react-three/rapier'
 import { Suspense, useRef } from 'react'
 import type { RapierRigidBody } from '@react-three/rapier'
 import { PHYSICS_TIMESTEP } from '../lib/constants'
+import { useEngineSound } from '../hooks/useEngineSound'
 import { useGameStore } from '../state/useGameStore'
 import { RacingLine } from '../track/RacingLine'
 import { Scenery } from '../track/Scenery'
@@ -21,6 +22,7 @@ import { useVehicleTuning } from './vehicleConfig'
 
 export function Game3D() {
   const tuning = useVehicleTuning()
+  useEngineSound()
   const debugColliders = useGameStore((s) => s.debug.colliders)
   const racingLine = useGameStore((s) => s.assists.racingLine)
   const chassisRef = useRef<RapierRigidBody>(null)
@@ -35,9 +37,9 @@ export function Game3D() {
           <Track3D />
           <Vehicle tuning={tuning} chassisRef={chassisRef} />
           <StartLights />
+          <Scenery />
         </Physics>
 
-        <Scenery />
         {racingLine && <RacingLine />}
         <GhostCar />
       </Suspense>

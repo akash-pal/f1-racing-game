@@ -81,11 +81,12 @@ export function useRaycastVehicle(
     const targetGrip = onTrack
       ? 1
       : surf.distToCenter < track.halfWidth + 3
-        ? 0.72 // kerb / edge
-        : 0.34 // grass — noticeably slow & slidey
+        ? 0.85 // kerb / edge — still mostly planted
+        : 0.6 // grass — slower and a bit loose, but not a crawl
     gripRef.current += (targetGrip - gripRef.current) * 0.1
-    // heavy rolling resistance on the grass — also eased so it doesn't thrash
-    const targetDamp = onTrack ? 0.15 : 1.1
+    // extra rolling resistance on the grass — enough to feel draggy, eased so
+    // it doesn't thrash frame to frame near the edge
+    const targetDamp = onTrack ? 0.15 : 0.5
     dampRef.current += (targetDamp - dampRef.current) * 0.1
     chassis.setLinearDamping(dampRef.current)
     applyVehicleControls(

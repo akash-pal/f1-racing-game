@@ -60,3 +60,16 @@ export const WHEEL_POSITIONS: readonly [number, number, number][] = [
 
 export const FRONT_WHEELS = [0, 1] as const
 export const REAR_WHEELS = [2, 3] as const
+
+// Where the visible wheels are drawn, chassis-local. The physics wheelbase is
+// deliberately shorter than the car looks; these sit at the bodywork's arches
+// (matched to the GLB) and are driven by the matching physics wheel's spin /
+// steer / suspension travel. Order: FL, FR, RL, RR.
+export const WHEEL_VISUAL_POSITIONS: readonly [number, number, number][] = [
+  [-0.86, -0.43, -1.72],
+  [0.86, -0.43, -1.72],
+  [-0.9, -0.43, 1.78],
+  [0.9, -0.43, 1.78],
+]
+/** Visible wheel radius (a touch over the physics radius so it reads as a tyre). */
+export const WHEEL_VISUAL_RADIUS = 0.36

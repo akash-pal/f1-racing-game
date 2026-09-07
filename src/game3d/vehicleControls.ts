@@ -115,8 +115,9 @@ export function applyVehicleControls(
     engineForce *= 1 - tcsCut
   }
 
-  // off-track: much less drive and grip (grass), so cutting corners costs you
-  engineForce *= 0.25 + 0.55 * grip
+  // off-track: less drive and grip (grass), so cutting corners costs you time —
+  // but you can still power out of it, it's not a tar pit
+  engineForce *= 0.5 + 0.5 * grip
 
   for (const i of REAR_WHEELS) controller.setWheelEngineForce(i, engineForce)
   for (const i of FRONT_WHEELS) controller.setWheelEngineForce(i, 0)
