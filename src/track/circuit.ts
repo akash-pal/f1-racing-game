@@ -12,7 +12,7 @@ import { CatmullRomCurve3, Vector2, Vector3 } from 'three'
 // prettier-ignore
 const ANCHORS: [number, number][] = [
   // --- MAIN STRAIGHT: S/F just after T16, heading east (+x), DRS zone ---
-  [   46,   66], [  120,   62], [  195,   56],
+  [   88,   62], [  150,   58], [  212,   52],
   // --- T1: sharp right off the end of the straight, car turns south ---
   [  252,   46], [  274,   72],
   // --- T2: right, tightening, dropping toward the bottom of the map ---
@@ -39,9 +39,9 @@ const ANCHORS: [number, number][] = [
   // --- long run south-east to Turn 15 ---
   [   -6,  -58], [   22,  -44],
   // --- T15: right-hander, tips the car onto the run down to T16 ---
-  [   32,  -18], [   18,   16],
-  // --- T16: long diagonal approach into a broad ~110-degree left ---
-  [   -8,   40], [  -46,   58], [  -22,   70],
+  [   46,  -16], [   50,   20],
+  // --- T16: broad, progressive left (S -> E) onto the main straight ---
+  [   56,   42], [   66,   58], [   80,   64],
 ]
 
 export interface TrackModel {
@@ -84,8 +84,6 @@ export interface TrackModel {
 
 const HALF_WIDTH = 7
 const SAMPLE_COUNT = 900
-/** How far in from the edge the kerb reaches (matches buildKerbGeometries width). */
-export const KERB_BAND = 1.7
 // the anchors above are traced off the real circuit map at a compact scale;
 // blow them up so the straights are a proper stretch of road to drive
 const ANCHOR_SCALE = 1.25
@@ -217,10 +215,10 @@ export function getCircuit(): TrackModel {
     }
     const distToCenter = Math.sqrt(best)
     const onTrack = distToCenter < HALF_WIDTH
-    // the kerb band hugs the edge at corners (matches buildKerbGeometries):
-    // from ~KERB_BAND inside the edge to a touch beyond it
+    // narrow band right at the edge — only a wheel actually clipping the painted
+    // kerb should buzz, not just using the width of a corner
     const onKerb =
-      isCorner[bestI] && distToCenter > HALF_WIDTH - KERB_BAND && distToCenter < HALF_WIDTH + 0.9
+      isCorner[bestI] && distToCenter > HALF_WIDTH - 0.8 && distToCenter < HALF_WIDTH + 1.5
     const grip = onTrack ? 1 : distToCenter < HALF_WIDTH + 3 ? 0.7 : 0.32
     return { onTrack, onKerb, grip, distToCenter, t: bestI / (samples.length - 1) }
   }

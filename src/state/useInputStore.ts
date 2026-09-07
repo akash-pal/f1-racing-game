@@ -17,3 +17,7 @@ export const useInputStore = create<InputStore>((set) => ({
   set: (patch) => set(patch),
   reset: () => set(ZERO),
 }))
+
+if (import.meta.env?.DEV) {
+  ;(globalThis as unknown as Record<string, unknown>).__inputStore = useInputStore
+}

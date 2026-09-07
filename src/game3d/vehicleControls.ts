@@ -134,38 +134,38 @@ export function applyVehicleControls(
     for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, slip)
   }
 
-  // progressive lateral grip (softer than the rapier default) so turn-in isn't
-  // snappy — a big contributor to the wobble
-  for (let i = 0; i < n; i++) controller.setWheelSideFrictionStiffness(i, 0.8 * grip)
+  // lateral grip: a touch more on the front axle so the car turns in cleanly
+  // instead of washing wide, rear slightly softer to keep the balance calm.
+  for (const i of FRONT_WHEELS) controller.setWheelSideFrictionStiffness(i, 1.15 * grip)
+  for (const i of REAR_WHEELS) controller.setWheelSideFrictionStiffness(i, 0.95 * grip)
 
-  // steering: rate-limited, gently reduced at speed (not numbed), front only
-  const speedFactor = 1 / (1 + Math.abs(forwardSpeed) * 0.02)
+  // steering: front only. Full lock and a quick rack at low speed (hairpins need
+  // it); above ~14 m/s both the max angle AND how fast the rack moves scale down
+  // with speedFactor, so you can't slam the wheel into a snap on turn-in.
+  const speedFactor = 1 / (1 + Math.max(0, Math.abs(forwardSpeed) - 14) * 0.032)
   const target = STEER_SIGN * clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
-  state.steer = moveTowards(state.steer, target, t.steerRate * dt)
+  const rack = t.steerRate * dt * (0.35 + 0.65 * speedFactor)
+  state.steer = moveTowards(state.steer, target, rack)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)
 
-  // --- yaw-rate stability control ---
-  // Nudge the car's actual yaw rate toward the rate the steering angle implies
-  // (bicycle model). This kills the corner-entry oscillation and the "turns the
-  // wrong way for a moment" transient without adding steady-state understeer.
-  // Skipped under handbrake so deliberate slides still rotate freely; a small
-  // always-on yaw damping term remains to settle the tail.
+  // --- yaw damping ---
+  // Bleed off yaw the steering isn't asking for. The reference yaw rate is the
+  // bicycle-model value the wheel angle implies, but CAPPED to a speed-scaled
+  // grip limit — without that cap the implied rate at speed is huge and the
+  // damper spins the car up into a snap-then-understeer. Damps hard when the car
+  // over-rotates, assists gently when it's below the reference. Weak under
+  // handbrake so deliberate slides still rotate.
   const yawRate = chassis.angvel().y
   const stepScale = dt / (1 / 60)
-  if (input.handbrake) {
-    chassis.applyTorqueImpulse({ x: 0, y: -yawRate * 6 * stepScale, z: 0 }, true)
-  } else {
-    const WHEELBASE = 3.2
-    let targetYaw = 0
-    if (Math.abs(state.steer) > 1e-3 && Math.abs(forwardSpeed) > 1) {
-      targetYaw = (forwardSpeed * Math.tan(state.steer)) / WHEELBASE
-      const cap = (grip * 11) / Math.max(6, Math.abs(forwardSpeed)) // ~lateral-accel limit
-      targetYaw = clamp(targetYaw, -cap, cap)
-    }
-    const yawErr = targetYaw - yawRate
-    const yawImpulse = clamp(yawErr * 48 * stepScale, -220, 220)
-    chassis.applyTorqueImpulse({ x: 0, y: yawImpulse, z: 0 }, true)
-  }
+  const WHEELBASE = 3.2
+  const speedAbs = Math.abs(forwardSpeed)
+  const impliedYaw = speedAbs > 1 ? (forwardSpeed * Math.tan(state.steer)) / WHEELBASE : 0
+  const yawCap = (grip * 22) / Math.max(12, speedAbs)
+  const refYaw = clamp(impliedYaw, -yawCap, yawCap)
+  const err = yawRate - refYaw
+  const overRotating = Math.abs(yawRate) > Math.abs(refYaw) && Math.sign(err) === Math.sign(yawRate)
+  const k = input.handbrake ? 6 : overRotating ? 30 : 12
+  chassis.applyTorqueImpulse({ x: 0, y: clamp(-err * k * stepScale, -150, 150), z: 0 }, true)
 
   controller.updateVehicle(dt)
 

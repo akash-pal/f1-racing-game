@@ -3,18 +3,16 @@ import { KEY_MAP } from '../lib/constants'
 import { dampTowards } from '../lib/math'
 import { useInputStore } from '../state/useInputStore'
 
-// Maps the keyboard AND the mouse to the analog input axes in useInputStore.
+// Maps the keyboard AND a gamepad (PS5 DualSense / Xbox / any "standard"
+// controller) to the analog input axes in useInputStore.
 //
 // - Runs its OWN requestAnimationFrame loop (not useFrame) so it can be mounted
 //   once in <App>, outside any <Canvas>, and keep working across scene switches.
-// - Steering: keyboard A/D (or ←/→) ramp the steer axis toward ±1. Moving the
-//   mouse steers by absolute horizontal position — pointer at the left edge =
-//   full left lock, centre = straight, right edge = full right. Mouse steering
-//   only counts while the pointer is actually moving; once it's been still for
-//   MOUSE_IDLE_MS the wheel eases back to centre, so a parked cursor off to one
-//   side doesn't pull the car. A key press overrides the mouse while held.
+// - Keyboard: A/D (or ←/→) steer, W/↑ gas, S/↓/Space brake, Shift handbrake.
+// - Gamepad: left stick X = steer, R2 = gas, L2 = brake, ✕ or R1 = handbrake.
+//   Whichever device you touch takes over; steering eases back to centre on
+//   release (light caster), it doesn't snap.
 // - Contract: steer axis is +1 for RIGHT, -1 for LEFT (see constants STEER_SIGN).
-// - A window 'blur' handler clears held keys so a key can't get "stuck".
 
 type Held = { fwd: boolean; back: boolean; left: boolean; right: boolean; handbrake: boolean }
 
@@ -34,15 +32,24 @@ const isTyping = (): boolean => {
   )
 }
 
-const MOUSE_DEADZONE = 0.08
-const MOUSE_IDLE_MS = 700 // mouse steering releases after the pointer stops moving
+const STICK_DEADZONE = 0.12
+const TRIGGER_DEADZONE = 0.04
+
+/** First connected gamepad, preferring one with the "standard" mapping. */
+function activePad(): Gamepad | null {
+  const pads = navigator.getGamepads?.() ?? []
+  let fallback: Gamepad | null = null
+  for (const p of pads) {
+    if (!p) continue
+    if (p.mapping === 'standard') return p
+    fallback ??= p
+  }
+  return fallback
+}
 
 export function useKeyboardInput(): void {
   useEffect(() => {
     const held = freshHeld()
-    let mouseSteer = 0
-    let mouseInWindow = false
-    let lastMouseMoveAt = -Infinity
     const RAMP = 8 // axis e-folds per second
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -59,51 +66,70 @@ export function useKeyboardInput(): void {
     }
     const onBlur = () => {
       Object.assign(held, freshHeld())
-      mouseInWindow = false
-    }
-    const onMouseMove = (e: MouseEvent) => {
-      const nx = (e.clientX / window.innerWidth) * 2 - 1 // -1 .. 1
-      const dz = Math.abs(nx) < MOUSE_DEADZONE ? 0 : (nx - Math.sign(nx) * MOUSE_DEADZONE) / (1 - MOUSE_DEADZONE)
-      const raw = Math.max(-1, Math.min(1, dz))
-      // lowpass the pointer position so hand tremor / sensor jitter near centre
-      // doesn't turn into steering wobble
-      mouseSteer += (raw - mouseSteer) * 0.3
-      mouseInWindow = true
-      lastMouseMoveAt = performance.now()
-    }
-    const onMouseLeave = () => {
-      mouseInWindow = false
     }
 
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', onBlur)
-    window.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseleave', onMouseLeave)
 
     let raf = 0
     let prev = performance.now()
+    let padSteer = 0 // low-passed stick value
+
     const tick = (now: number) => {
       const dt = Math.min((now - prev) / 1000, 0.1)
       prev = now
       const s = useInputStore.getState()
 
-      // Steering does NOT auto-centre. While a key is held (or the mouse is
-      // steering) it moves briskly toward the target; when you let go it HOLDS,
-      // easing back to centre only very gently (like light caster) so the car
-      // never "corrects itself" out from under you.
+      // --- gamepad (standard mapping): axes[0] stick X, buttons 6/7 = L2/R2 ---
+      const pad = activePad()
+      let padThrottle = 0
+      let padBrake = 0
+      let padHandbrake = false
+      let padSteerTarget = 0
+      let padSteering = false
+      if (pad) {
+        const sx = pad.axes[0] ?? 0
+        padSteerTarget =
+          Math.abs(sx) < STICK_DEADZONE
+            ? 0
+            : Math.sign(sx) * ((Math.abs(sx) - STICK_DEADZONE) / (1 - STICK_DEADZONE))
+        const rt = pad.buttons[7]?.value ?? 0
+        const lt = pad.buttons[6]?.value ?? 0
+        padThrottle = rt < TRIGGER_DEADZONE ? 0 : rt
+        padBrake = lt < TRIGGER_DEADZONE ? 0 : lt
+        padHandbrake = !!(pad.buttons[0]?.pressed || pad.buttons[5]?.pressed) // ✕ or R1
+        padSteering = Math.abs(padSteerTarget) > 0.02
+      }
+      // low-pass the stick a touch so raw jitter near centre isn't steering noise
+      padSteer += (padSteerTarget - padSteer) * Math.min(1, 18 * dt)
+
+      // --- combine: gamepad and keyboard coexist, larger input wins ---
       const keySteer = (held.right ? 1 : 0) - (held.left ? 1 : 0)
-      // the mouse only steers while it's actually being moved
-      const mouseActive = mouseInWindow && now - lastMouseMoveAt < MOUSE_IDLE_MS
-      const engaging = keySteer !== 0 || mouseActive
-      const steerTarget = keySteer !== 0 ? keySteer : mouseActive ? mouseSteer : 0
-      const steerRate = engaging ? 11 : 0.9
+      const throttleTarget = Math.max(held.fwd ? 1 : 0, padThrottle)
+      const brakeTarget = Math.max(held.back ? 1 : 0, padBrake)
+      const handbrake = held.handbrake || padHandbrake
+
+      // steering: keyboard key wins while held; else follow the stick; else ease
+      // gently back to centre
+      let steerTarget: number
+      let steerRate: number
+      if (keySteer !== 0) {
+        steerTarget = keySteer
+        steerRate = 11
+      } else if (padSteering) {
+        steerTarget = padSteer
+        steerRate = 16 // the stick is already analog — track it fairly directly
+      } else {
+        steerTarget = 0
+        steerRate = 0.9
+      }
 
       s.set({
-        throttle: dampTowards(s.throttle, held.fwd ? 1 : 0, RAMP, dt),
-        brake: dampTowards(s.brake, held.back ? 1 : 0, RAMP, dt),
+        throttle: dampTowards(s.throttle, throttleTarget, RAMP, dt),
+        brake: dampTowards(s.brake, brakeTarget, RAMP, dt),
         steer: dampTowards(s.steer, steerTarget, steerRate, dt),
-        handbrake: held.handbrake,
+        handbrake,
       })
       raf = requestAnimationFrame(tick)
     }
@@ -114,8 +140,6 @@ export function useKeyboardInput(): void {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('blur', onBlur)
-      window.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseleave', onMouseLeave)
       useInputStore.getState().reset()
     }
   }, [])

@@ -101,26 +101,21 @@ export function useRaycastVehicle(
       { tcs: game.assists.tcs, grip: gripRef.current },
     )
 
-    // --- kerb rumble: rattle and unsettle the car while it's over a corner kerb ---
+    // --- kerb rumble: a buzz through the car while a wheel is on a corner kerb.
+    // Deliberately light — a vibration, not a hit — so using the kerbs on the
+    // racing line doesn't feel like the car is breaking loose.
     if (surf.onKerb && !game.paused && raceGo()) {
       const lv = chassis.linvel()
       const spd = Math.hypot(lv.x, lv.z)
-      if (spd > 2) {
+      if (spd > 3) {
         kerbTick.current++
-        // ~30 Hz alternating hammer, jittered so it reads as a rumble strip
         const buzz = (kerbTick.current % 2 === 0 ? 1 : -1) * (0.7 + 0.3 * Math.random())
         const t = Math.min(1, spd / 22)
-        // vertical shudder with a small net lift (you climb onto the kerb)
-        chassis.applyImpulse({ x: 0, y: buzz * (150 + 430 * t) + 60 * t, z: 0 }, true)
-        // yaw jitter + a lateral skip in the car's right direction: it wanders
-        chassis.applyTorqueImpulse({ x: 0, y: buzz * (60 + 110 * t), z: 0 }, true)
-        const rot = chassis.rotation()
-        const rx = 1 - 2 * (rot.y * rot.y + rot.z * rot.z)
-        const rz = 2 * (rot.x * rot.z - rot.y * rot.w)
-        const skip = buzz * (35 + 70 * t)
-        chassis.applyImpulse({ x: rx * skip, y: 0, z: rz * skip }, true)
-        // kerbs give noticeably less grip
-        gripRef.current = Math.min(gripRef.current, 0.7)
+        // vertical shudder only — no lateral skip (that read as "unstable")
+        chassis.applyImpulse({ x: 0, y: buzz * (55 + 120 * t), z: 0 }, true)
+        chassis.applyTorqueImpulse({ x: 0, y: buzz * (12 + 22 * t), z: 0 }, true)
+        // kerbs are a touch slippery, not ice
+        gripRef.current = Math.min(gripRef.current, 0.9)
       }
     }
   })
