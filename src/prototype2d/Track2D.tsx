@@ -2,6 +2,7 @@ import { Line } from '@react-three/drei'
 import { useMemo } from 'react'
 import { DoubleSide, Vector3 } from 'three'
 import { getCircuit } from '../track/circuit'
+import { placedGrandstands } from '../track/grandstandLayout'
 import { buildKerbGeometries, buildRoadGeometry } from '../track/trackMesh'
 
 // Top-down circuit outline for the 2D prototype: the tarmac ribbon, corner
@@ -12,6 +13,7 @@ export function Track2D() {
   const track = getCircuit()
   const road = useMemo(() => buildRoadGeometry(0.0), [])
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
+  const stands = useMemo(() => placedGrandstands(), [])
 
   const flat = (pts: Vector3[], y = 0.03) => pts.map((p) => new Vector3(p.x, y, p.z))
 
@@ -37,6 +39,14 @@ export function Track2D() {
       <mesh geometry={kerbB}>
         <meshBasicMaterial color="#e6e6e6" side={DoubleSide} />
       </mesh>
+
+      {/* grandstands (top-down blocks) */}
+      {stands.map((s, i) => (
+        <mesh key={i} position={[s.cx, 0.02, s.cz]} rotation={[-Math.PI / 2, 0, s.rotY]}>
+          <planeGeometry args={[s.length, s.depth]} />
+          <meshBasicMaterial color="#8b8f96" side={DoubleSide} />
+        </mesh>
+      ))}
 
       {/* edge lines */}
       <Line points={flat(track.leftEdge)} color="#f3f3f0" lineWidth={2} />

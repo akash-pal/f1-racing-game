@@ -5,6 +5,7 @@ import type { RapierRigidBody } from '@react-three/rapier'
 import { PHYSICS_TIMESTEP } from '../lib/constants'
 import { useEngineSound } from '../hooks/useEngineSound'
 import { useGameStore } from '../state/useGameStore'
+import { Grandstands } from '../track/Grandstands'
 import { RacingLine } from '../track/RacingLine'
 import { Scenery } from '../track/Scenery'
 import { Track3D } from '../track/Track3D'
@@ -40,6 +41,7 @@ export function Game3D() {
           <Scenery />
         </Physics>
 
+        <Grandstands />
         {racingLine && <RacingLine />}
         <GhostCar />
       </Suspense>

@@ -11,35 +11,37 @@ import { CatmullRomCurve3, Vector2, Vector3 } from 'three'
 
 // prettier-ignore
 const ANCHORS: [number, number][] = [
-  // --- MAIN STRAIGHT: S/F heading east (+x), DRS zone, toward Turn 1 ---
-  [   15,   68], [   95,   66], [  174,   62],
-  // --- T1: sharp right off the straight, car turns south ---
-  [  232,   48], [  256,   66],
+  // --- MAIN STRAIGHT: S/F just after T16, heading east (+x), DRS zone ---
+  [   46,   66], [  120,   62], [  195,   56],
+  // --- T1: sharp right off the end of the straight, car turns south ---
+  [  252,   46], [  274,   72],
   // --- T2: right, tightening, dropping toward the bottom of the map ---
-  [  268,  104],
-  // --- T3: long, slow, blind right hairpin onto the back straight ---
-  [  284,  150], [  270,  176], [  228,  184],
-  // --- BACK STRAIGHT: the long one (DRS zone), heading west ---
-  [  120,  178], [    0,  174], [ -120,  172],
-  // --- T4: heavy-braking left hairpin at the far end ---
-  [ -186,  176], [ -212,  148], [ -198,  116],
-  // --- diagonal run up into Sector 2 ---
-  [ -150,   96], [  -96,   56],
-  // --- T5: right ---
-  [  -66,   24],
-  // --- T6-T7: the Sector-2 chicane (right-left) ---
-  [  -50,  -12], [  -86,  -22],
-  // --- T8-T9: quick left-right ---
-  [ -140,  -18], [ -170,  -44],
-  // --- T10-T11-T12: the banked multi-apex "Currybolica" right, top-left ---
-  [ -238,  -70], [ -274, -110], [ -250, -158], [ -198, -172],
-  [ -150, -146], [ -132, -100],
-  // --- T13-T14: fast chicane, heading east across the top ---
-  [  -96,  -84], [  -52,  -90], [   -8,  -66],
-  // --- T15: right-hander, blind, swinging the car back south ---
-  [   30,  -44], [   36,   -6], [   14,   26],
-  // --- T16: 90-degree left onto the main straight ---
-  [  -30,   54], [  -60,   62],
+  [  285,  112], [  294,  142],
+  // --- T3: long, slow, blind right hairpin onto the bottom straight ---
+  [  304,  162], [  288,  180], [  246,  186], [  186,  184],
+  // --- BOTTOM STRAIGHT: the long one, heading west, main overtaking spot ---
+  [   60,  180], [  -70,  178], [ -182,  176],
+  // --- T4: heavy-braking hairpin at the far west end ---
+  [ -218,  170], [ -226,  140], [ -206,  118],
+  // --- SC1: diagonal climb north-east into Sector 2 ---
+  [ -150,   84], [  -98,   40],
+  // --- T5: right kink ---
+  [  -72,   10],
+  // --- T6-T7: the SC2 chicane, right then left ---
+  [  -58,  -30], [  -98,  -38],
+  // --- T8-T9: quick left-right, drifting west ---
+  [ -150,  -32], [ -184,  -54],
+  // --- T10-T11-T12: BP3 "Currybolica", the big multi-apex left loop ---
+  [ -244,  -80], [ -292, -120], [ -266, -172], [ -208, -188],
+  [ -166, -156], [ -158, -110],
+  // --- T13-T14: chicane heading south-east off the loop ---
+  [ -120,  -92], [  -78,  -96], [  -40,  -78],
+  // --- long run south-east to Turn 15 ---
+  [   -6,  -58], [   22,  -44],
+  // --- T15: right-hander, tips the car onto the run down to T16 ---
+  [   32,  -18], [   18,   16],
+  // --- T16: long diagonal approach into a broad ~110-degree left ---
+  [   -8,   40], [  -46,   58], [  -22,   70],
 ]
 
 export interface TrackModel {
@@ -74,14 +76,19 @@ export interface TrackModel {
   /** Start/finish: world position, forward unit vector, and game heading. */
   start: { position: Vector3; forward: Vector3; heading: number }
   /** Nearest-point query for on-track / grip tests. */
-  sample: (x: number, z: number) => { onTrack: boolean; grip: number; distToCenter: number; t: number }
+  sample: (
+    x: number,
+    z: number,
+  ) => { onTrack: boolean; onKerb: boolean; grip: number; distToCenter: number; t: number }
 }
 
 const HALF_WIDTH = 7
 const SAMPLE_COUNT = 900
-// the anchors above are traced from the real circuit map at a compact scale;
+/** How far in from the edge the kerb reaches (matches buildKerbGeometries width). */
+export const KERB_BAND = 1.7
+// the anchors above are traced off the real circuit map at a compact scale;
 // blow them up so the straights are a proper stretch of road to drive
-const ANCHOR_SCALE = 1.45
+const ANCHOR_SCALE = 1.25
 
 let cached: TrackModel | null = null
 
@@ -210,8 +217,12 @@ export function getCircuit(): TrackModel {
     }
     const distToCenter = Math.sqrt(best)
     const onTrack = distToCenter < HALF_WIDTH
+    // the kerb band hugs the edge at corners (matches buildKerbGeometries):
+    // from ~KERB_BAND inside the edge to a touch beyond it
+    const onKerb =
+      isCorner[bestI] && distToCenter > HALF_WIDTH - KERB_BAND && distToCenter < HALF_WIDTH + 0.9
     const grip = onTrack ? 1 : distToCenter < HALF_WIDTH + 3 ? 0.7 : 0.32
-    return { onTrack, grip, distToCenter, t: bestI / (samples.length - 1) }
+    return { onTrack, onKerb, grip, distToCenter, t: bestI / (samples.length - 1) }
   }
 
   cached = {
@@ -227,6 +238,9 @@ export function getCircuit(): TrackModel {
     bounds,
     start,
     sample,
+  }
+  if (import.meta.env?.DEV) {
+    ;(globalThis as unknown as Record<string, unknown>).__circuit = cached
   }
   return cached
 }

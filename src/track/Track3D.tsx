@@ -36,7 +36,7 @@ export function Track3D() {
   }, [asphalt])
 
   const road = useMemo(() => buildRoadGeometry(0.02), [])
-  const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
+  const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(), [])
   const edgeLines = useMemo(() => buildEdgeLineGeometry(0.18), [])
 
   const start = track.start
@@ -62,12 +62,12 @@ export function Track3D() {
         <meshStandardMaterial color="#f3f3f0" roughness={0.85} metalness={0} side={DoubleSide} />
       </mesh>
 
-      {/* kerbs */}
-      <mesh geometry={kerbA}>
-        <meshStandardMaterial color="#c33636" roughness={0.7} side={DoubleSide} />
+      {/* raised red/white rumble kerbs at the corners */}
+      <mesh geometry={kerbA} castShadow receiveShadow>
+        <meshStandardMaterial color="#d21f1f" roughness={0.5} metalness={0} side={DoubleSide} />
       </mesh>
-      <mesh geometry={kerbB}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.7} side={DoubleSide} />
+      <mesh geometry={kerbB} castShadow receiveShadow>
+        <meshStandardMaterial color="#eef0ee" roughness={0.5} metalness={0} side={DoubleSide} />
       </mesh>
 
       {/* start / finish line */}
