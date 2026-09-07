@@ -20,6 +20,8 @@ export function Hud() {
   const mode = useGameStore((s) => s.mode)
   const cameraView = useGameStore((s) => s.cameraView)
   const assists = useGameStore((s) => s.assists)
+  const soundOn = useGameStore((s) => s.soundOn)
+  const toggleSound = useGameStore((s) => s.toggleSound)
 
   const speedKph = useHudStore((s) => s.speedKph)
   const gearLabel = useHudStore((s) => s.gearLabel)
@@ -143,6 +145,17 @@ export function Hud() {
             {assists.racingLine && <span className="chip chip--on">LINE</span>}
             {assists.tcs && <span className="chip chip--on">TCS</span>}
             {assists.ghost && <span className="chip chip--on">GHOST</span>}
+            <button
+              type="button"
+              className={'chip chip--btn' + (soundOn ? ' chip--on' : '')}
+              onClick={() => {
+                toggleSound()
+                ;(document.activeElement as HTMLElement | null)?.blur()
+              }}
+              title="Engine sound (M)"
+            >
+              {soundOn ? '🔊 SOUND' : '🔇 MUTED'}
+            </button>
           </div>
         </div>
       )}

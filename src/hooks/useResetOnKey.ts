@@ -5,7 +5,7 @@ import { useGameStore } from '../state/useGameStore'
 //   R  reset / restart the lap        P  pause
 //   C  cycle camera view              T  cycle time of day
 //   L  toggle racing line             G  toggle ghost car
-//   K  toggle traction control
+//   K  toggle traction control        M  mute / unmute engine
 const isTyping = () => {
   const el = document.activeElement
   return el instanceof HTMLElement && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
@@ -37,6 +37,9 @@ export function useResetOnKey(): void {
           break
         case 'KeyK':
           g.toggleAssist('tcs')
+          break
+        case 'KeyM':
+          g.toggleSound()
           break
       }
     }

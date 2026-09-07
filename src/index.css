@@ -287,6 +287,21 @@ canvas {
   background: #7fd4a0;
   border-color: transparent;
 }
+.chip--btn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #cfd6de;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.chip--btn.chip--on {
+  color: #0b0f16;
+}
+.chip--btn:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
 
 /* --- centre banner (GET READY / GO! / NEW RECORD) --- */
 .race-banner {

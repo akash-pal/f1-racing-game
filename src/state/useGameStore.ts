@@ -24,6 +24,7 @@ interface GameStore {
   cameraView: CameraView
   timeOfDay: TimeOfDay
   assists: Assists
+  soundOn: boolean
   raceState: RaceState
   /** performance.now() when the countdown began; GO time is derived from it. */
   countdownStartedAt: number
@@ -37,6 +38,7 @@ interface GameStore {
   cycleTimeOfDay: () => void
   setTimeOfDay: (t: TimeOfDay) => void
   toggleAssist: (k: keyof Assists) => void
+  toggleSound: () => void
   beginCountdown: () => void
   setRaceState: (s: RaceState) => void
   setDebug: (patch: Partial<GameStore['debug']>) => void
@@ -51,6 +53,7 @@ export const useGameStore = create<GameStore>()(
       cameraView: 'chase',
       timeOfDay: 'noon',
       assists: { racingLine: false, ghost: true, tcs: true },
+      soundOn: true,
       raceState: 'countdown',
       countdownStartedAt: 0,
       debug: { colliders: false, telemetry: true },
@@ -69,6 +72,7 @@ export const useGameStore = create<GameStore>()(
         })),
       setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
       toggleAssist: (k) => set((s) => ({ assists: { ...s.assists, [k]: !s.assists[k] } })),
+      toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
       beginCountdown: () =>
         set({ raceState: 'countdown', countdownStartedAt: performance.now() }),
       setRaceState: (raceState) => set({ raceState }),
@@ -82,6 +86,7 @@ export const useGameStore = create<GameStore>()(
         cameraView: s.cameraView,
         timeOfDay: s.timeOfDay,
         assists: s.assists,
+        soundOn: s.soundOn,
       }),
     },
   ),
