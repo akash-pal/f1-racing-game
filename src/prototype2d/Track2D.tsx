@@ -39,8 +39,8 @@ export function Track2D() {
       </mesh>
 
       {/* edge lines */}
-      <Line points={flat(track.leftEdge)} color="#dddddd" lineWidth={1.5} />
-      <Line points={flat(track.rightEdge)} color="#dddddd" lineWidth={1.5} />
+      <Line points={flat(track.leftEdge)} color="#f3f3f0" lineWidth={2} />
+      <Line points={flat(track.rightEdge)} color="#f3f3f0" lineWidth={2} />
 
       {/* centre line (racing line reference) */}
       <Line points={flat(track.samples, 0.04)} color="#e0c060" lineWidth={1} dashed dashSize={5} gapSize={5} />

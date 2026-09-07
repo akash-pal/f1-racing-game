@@ -8,7 +8,7 @@ import {
   type Texture,
 } from 'three'
 import { getCircuit } from './circuit'
-import { buildKerbGeometries, buildRoadGeometry } from './trackMesh'
+import { buildEdgeLineGeometry, buildKerbGeometries, buildRoadGeometry } from './trackMesh'
 
 // The Buddh International Circuit in 3D: photo-textured tarmac ribbon, red/white
 // kerbs at the corners, and the start/finish line. No trackside walls — running
@@ -37,6 +37,7 @@ export function Track3D() {
 
   const road = useMemo(() => buildRoadGeometry(0.02), [])
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
+  const edgeLines = useMemo(() => buildEdgeLineGeometry(0.18), [])
 
   const start = track.start
   const startYaw = Math.atan2(start.forward.x, start.forward.z)
@@ -54,6 +55,11 @@ export function Track3D() {
           normalScale={[0.6, 0.6]}
           side={DoubleSide}
         />
+      </mesh>
+
+      {/* painted white edge lines, both sides, whole lap */}
+      <mesh geometry={edgeLines}>
+        <meshStandardMaterial color="#f3f3f0" roughness={0.85} metalness={0} side={DoubleSide} />
       </mesh>
 
       {/* kerbs */}
