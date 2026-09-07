@@ -22,6 +22,8 @@ export interface TodConfig {
   skyRayleigh: number
   /** how strongly the HDRI image-based lighting contributes at this time */
   envIntensity: number
+  /** Zwartkops HDRI (Poly Haven, CC0) used for reflections at this time */
+  hdri: string
 }
 
 export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
@@ -41,6 +43,7 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 5,
     skyRayleigh: 1.7,
     envIntensity: 0.55,
+    hdri: '/env/zwartkops_morning_2k.hdr',
   },
   noon: {
     label: 'Noon',
@@ -58,6 +61,7 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 3,
     skyRayleigh: 1,
     envIntensity: 0.7,
+    hdri: '/env/zwartkops_morning_2k.hdr',
   },
   afternoon: {
     label: 'Afternoon',
@@ -75,6 +79,7 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 6,
     skyRayleigh: 1.6,
     envIntensity: 0.6,
+    hdri: '/env/zwartkops_afternoon_2k.hdr',
   },
   sunset: {
     label: 'Sunset',
@@ -92,6 +97,7 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 10,
     skyRayleigh: 3,
     envIntensity: 0.35,
+    hdri: '/env/zwartkops_sunset_2k.hdr',
   },
   night: {
     label: 'Night',
@@ -109,6 +115,7 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     skyTurbidity: 0.2,
     skyRayleigh: 0.4,
     envIntensity: 0.12,
+    hdri: '/env/zwartkops_sunset_2k.hdr',
   },
 }
 

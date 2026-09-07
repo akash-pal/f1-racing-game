@@ -47,11 +47,13 @@ export function SkyDome({ targetRef }: Props) {
         <Stars radius={800} depth={120} count={2600} factor={6} saturation={0} fade speed={0.5} />
       )}
 
-      {/* real image-based lighting: Zwartkops racetrack HDRI (Poly Haven, CC0),
-          2K, used for reflections/ambient only — the visible sky stays <Sky> */}
+      {/* real image-based lighting: time-matched Zwartkops racetrack HDRI
+          (Poly Haven, CC0), 2K, for reflections/ambient only — visible sky
+          stays <Sky>. key so it swaps cleanly when the time of day changes */}
       <Suspense fallback={null}>
         <Environment
-          files="/env/zwartkops_2k.hdr"
+          key={cfg.hdri}
+          files={cfg.hdri}
           environmentIntensity={cfg.envIntensity}
         />
       </Suspense>

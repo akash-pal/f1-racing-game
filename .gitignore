@@ -34,3 +34,6 @@ zwartkops_straight_morning_4k.exr
 # Poly Haven raw downloads
 poly/
 *.zip
+
+# root-level raw asset dump (not src/track)
+/track/

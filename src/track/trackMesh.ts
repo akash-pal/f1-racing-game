@@ -79,9 +79,10 @@ export function buildKerbGeometries(width = 1.4): [BufferGeometry, BufferGeometr
 
 /**
  * Continuous painted white edge lines down BOTH sides of the track — a thin
- * `width`-wide strip lying just inside each edge, running the whole lap.
+ * `width`-wide strip set `gap` metres in from each edge (leaving a sliver of
+ * bare tarmac between the line and the grass), running the whole lap.
  */
-export function buildEdgeLineGeometry(width = 0.18, y = 0.035): BufferGeometry {
+export function buildEdgeLineGeometry(width = 0.18, gap = 0.35, y = 0.035): BufferGeometry {
   const track = getCircuit()
   const n = track.samples.length
   const inward = new Vector3()
@@ -91,11 +92,12 @@ export function buildEdgeLineGeometry(width = 0.18, y = 0.035): BufferGeometry {
   for (let i = 0; i < n - 1; i++) {
     for (const edge of [track.leftEdge, track.rightEdge]) {
       inward.copy(track.samples[i]).sub(edge[i]).setY(0).normalize()
+      const o = gap // outboard offset of the line from the edge
       positions.push(
-        edge[i].x, y, edge[i].z,
-        edge[i].x + inward.x * width, y, edge[i].z + inward.z * width,
-        edge[i + 1].x, y, edge[i + 1].z,
-        edge[i + 1].x + inward.x * width, y, edge[i + 1].z + inward.z * width,
+        edge[i].x + inward.x * o, y, edge[i].z + inward.z * o,
+        edge[i].x + inward.x * (o + width), y, edge[i].z + inward.z * (o + width),
+        edge[i + 1].x + inward.x * o, y, edge[i + 1].z + inward.z * o,
+        edge[i + 1].x + inward.x * (o + width), y, edge[i + 1].z + inward.z * (o + width),
       )
       indices.push(v, v + 2, v + 1, v + 1, v + 2, v + 3)
       v += 4
