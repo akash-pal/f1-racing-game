@@ -40,8 +40,8 @@ export const DEFAULT_TUNING: VehicleTuning = {
   engineForce: 5400,
   brakeForce: 2900,
   handbrakeForce: 5200,
-  maxSteer: 0.37, // ~21 deg — less darty; still clears the hairpins (corners are >=15u)
-  steerRate: 2.3, // slower rack so turn-in is progressive, not a flick
+  maxSteer: 0.34, // ~19 deg — calm; still clears the hairpins (corners are >=15u)
+  steerRate: 2.0, // slower rack so turn-in is progressive, not a flick
   suspensionRestLength: 0.3,
   suspensionStiffness: 34,
   suspensionCompression: 1.6, // heavy damping -> no bounce/wobble

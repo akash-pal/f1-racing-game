@@ -143,7 +143,11 @@ export function applyVehicleControls(
   // it); above ~14 m/s both the max angle AND how fast the rack moves scale down
   // with speedFactor, so you can't slam the wheel into a snap on turn-in.
   const speedFactor = 1 / (1 + Math.max(0, Math.abs(forwardSpeed) - 14) * 0.032)
-  const target = STEER_SIGN * clamp(input.steer, -1, 1) * t.maxSteer * speedFactor
+  // expo: soften the response around centre so small inputs don't dart the
+  // car, while full lock is still reached at the stops for the hairpins.
+  const raw = clamp(input.steer, -1, 1)
+  const shaped = Math.sign(raw) * Math.abs(raw) ** 1.5
+  const target = STEER_SIGN * shaped * t.maxSteer * speedFactor
   const rack = t.steerRate * dt * (0.35 + 0.65 * speedFactor)
   state.steer = moveTowards(state.steer, target, rack)
   for (const i of FRONT_WHEELS) controller.setWheelSteering(i, state.steer)
