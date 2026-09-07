@@ -48,6 +48,8 @@ export interface VehicleStepResult {
 
 export interface VehicleStepOpts {
   tcs?: boolean
+  /** surface grip multiplier (1 = tarmac, < 1 = grass / off-track) */
+  grip?: number
 }
 
 export function applyVehicleControls(
@@ -62,6 +64,7 @@ export function applyVehicleControls(
 ): VehicleStepResult {
   const t = tuning
   const n = controller.numWheels()
+  const grip = opts.grip ?? 1
 
   // keep suspension/grip in sync with live tuning every step
   for (let i = 0; i < n; i++) {
@@ -112,17 +115,22 @@ export function applyVehicleControls(
     engineForce *= 1 - tcsCut
   }
 
+  // off-track: much less drive and grip (grass), so cutting corners costs you
+  engineForce *= 0.25 + 0.55 * grip
+
   for (const i of REAR_WHEELS) controller.setWheelEngineForce(i, engineForce)
   for (const i of FRONT_WHEELS) controller.setWheelEngineForce(i, 0)
   for (let i = 0; i < n; i++) controller.setWheelBrake(i, footBrake)
 
+  const slip = t.frictionSlip * grip
   if (input.handbrake) {
     for (const i of REAR_WHEELS) {
       controller.setWheelBrake(i, t.handbrakeForce)
-      controller.setWheelFrictionSlip(i, t.frictionSlip * 0.4)
+      controller.setWheelFrictionSlip(i, slip * 0.4)
     }
+    for (const i of FRONT_WHEELS) controller.setWheelFrictionSlip(i, slip)
   } else {
-    for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, t.frictionSlip)
+    for (let i = 0; i < n; i++) controller.setWheelFrictionSlip(i, slip)
   }
 
   // steering: rate-limited, gently reduced at speed (not numbed), front only

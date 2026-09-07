@@ -32,6 +32,7 @@ export function Vehicle({ tuning, chassisRef }: Props) {
   const hudAccum = useRef(0)
   const wasRacing = useRef(false)
   const recordClearAt = useRef(0)
+  const rescueTimer = useRef(0)
   const lap = useLapTimer()
   const resetNonce = useGameStore((s) => s.resetNonce)
 
@@ -80,6 +81,27 @@ export function Vehicle({ tuning, chassisRef }: Props) {
     const p = b.translation()
     const r = b.rotation()
     const speedMs = Math.hypot(lv.x, lv.z)
+
+    // far-off rescue: with no walls, if the car ends up well out in the grass
+    // for a moment, drop it back onto the nearest bit of track facing forward
+    const surf = track.sample(p.x, p.z)
+    if (racing && surf.distToCenter > 55) {
+      rescueTimer.current += dt
+      if (rescueTimer.current > 2.2) {
+        rescueTimer.current = 0
+        const n = track.samples.length
+        const i = Math.min(n - 1, Math.max(0, Math.round(surf.t * (n - 1))))
+        const rp = track.samples[i]
+        const rtan = track.tangents[i]
+        spawnQuat.setFromAxisAngle(Y_AXIS, Math.atan2(-rtan.x, -rtan.z))
+        b.setTranslation({ x: rp.x, y: 1.2, z: rp.z }, true)
+        b.setRotation(spawnQuat, true)
+        b.setLinvel({ x: 0, y: 0, z: 0 }, true)
+        b.setAngvel({ x: 0, y: 0, z: 0 }, true)
+      }
+    } else {
+      rescueTimer.current = 0
+    }
     // forward / lateral split for slip + gear
     const fx = 2 * (r.x * r.z + r.w * r.y)
     const fz = 1 - 2 * (r.x * r.x + r.y * r.y)
@@ -130,7 +152,7 @@ export function Vehicle({ tuning, chassisRef }: Props) {
         rpm: g.rpm,
         throttle: racing ? input.throttle : 0,
         brake: input.brake,
-        offTrack: !track.sample(p.x, p.z).onTrack,
+        offTrack: !surf.onTrack,
         currentLapMs: lapMs,
       })
     }

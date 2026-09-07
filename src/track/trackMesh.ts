@@ -40,47 +40,6 @@ export function buildRoadGeometry(y = 0.02): BufferGeometry {
 }
 
 /**
- * A vertical wall ribbon that follows one edge, offset `offset` units further
- * out from the centre-line, rising to `height`.
- */
-export function buildWallGeometry(side: 'left' | 'right', offset: number, height: number): BufferGeometry {
-  const track = getCircuit()
-  const edge = side === 'left' ? track.leftEdge : track.rightEdge
-  const center = track.samples
-  const n = edge.length
-  const positions = new Float32Array(n * 2 * 3)
-  const normals = new Float32Array(n * 2 * 3)
-  const uvs = new Float32Array(n * 2 * 2)
-  const out = new Vector3()
-  for (let i = 0; i < n; i++) {
-    out.copy(edge[i]).sub(center[i]).normalize()
-    const bx = edge[i].x + out.x * offset
-    const bz = edge[i].z + out.z * offset
-    positions.set([bx, 0, bz], i * 6)
-    positions.set([bx, height, bz], i * 6 + 3)
-    // normal faces the track (inward)
-    normals.set([-out.x, 0, -out.z, -out.x, 0, -out.z], i * 6)
-    const u = i / (n - 1)
-    uvs.set([u * 90, 0, u * 90, 1], i * 4)
-  }
-  const indices: number[] = []
-  for (let i = 0; i < n - 1; i++) {
-    const a = i * 2
-    const b = i * 2 + 1
-    const c = i * 2 + 2
-    const d = i * 2 + 3
-    // face inward
-    indices.push(a, b, c, b, d, c)
-  }
-  const g = new BufferGeometry()
-  g.setAttribute('position', new BufferAttribute(positions, 3))
-  g.setAttribute('normal', new BufferAttribute(normals, 3))
-  g.setAttribute('uv', new BufferAttribute(uvs, 2))
-  g.setIndex(indices)
-  return g
-}
-
-/**
  * Kerb strips — ONLY at corners (per the circuit's isCorner mask), hugging both
  * edges. Split into two geometries by segment parity for the red/white stripe.
  */

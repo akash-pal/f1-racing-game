@@ -4,11 +4,9 @@ import { DoubleSide, Vector3 } from 'three'
 import { getCircuit } from '../track/circuit'
 import { buildKerbGeometries, buildRoadGeometry } from '../track/trackMesh'
 
-// Top-down circuit outline for the 2D prototype. Same centre-line and edges
-// as the 3D scene — the tarmac ribbon, kerbs, edge lines and barrier lines
-// (offset just outside each edge) that give the "3D" track its footprint.
-
-const BARRIER_OFFSET = 1.2
+// Top-down circuit outline for the 2D prototype: the tarmac ribbon, corner
+// kerbs, painted edge lines and the start/finish — same centre-line as the 3D
+// scene. No barriers (running wide just means the grass).
 
 export function Track2D() {
   const track = getCircuit()
@@ -16,21 +14,6 @@ export function Track2D() {
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
 
   const flat = (pts: Vector3[], y = 0.03) => pts.map((p) => new Vector3(p.x, y, p.z))
-
-  const outerBarrier = useMemo(() => {
-    const t = getCircuit()
-    return t.leftEdge.map((e, i) => {
-      const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
-      return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)
-    })
-  }, [])
-  const innerBarrier = useMemo(() => {
-    const t = getCircuit()
-    return t.rightEdge.map((e, i) => {
-      const out = new Vector3().copy(e).sub(t.samples[i]).normalize()
-      return new Vector3(e.x + out.x * BARRIER_OFFSET, 0.05, e.z + out.z * BARRIER_OFFSET)
-    })
-  }, [])
 
   const startYaw = Math.atan2(track.start.forward.x, track.start.forward.z)
 
@@ -61,10 +44,6 @@ export function Track2D() {
 
       {/* centre line (racing line reference) */}
       <Line points={flat(track.samples, 0.04)} color="#e0c060" lineWidth={1} dashed dashSize={5} gapSize={5} />
-
-      {/* barriers */}
-      <Line points={outerBarrier} color="#b7bcc4" lineWidth={2.5} />
-      <Line points={innerBarrier} color="#b7bcc4" lineWidth={2.5} />
 
       {/* start / finish */}
       <mesh

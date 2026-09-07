@@ -4,7 +4,10 @@ import type { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import { useGameStore } from '../state/useGameStore'
 import { useInputStore } from '../state/useInputStore'
 import { raceGo } from '../hooks/useRaceControl'
+import { getCircuit } from '../track/circuit'
 import type { VehicleTuning } from '../lib/types'
+
+const track = getCircuit()
 import {
   applyVehicleControls,
   setupVehicleController,
@@ -66,6 +69,16 @@ export function useRaycastVehicle(
     const gated = raceGo()
       ? input
       : { throttle: 0, brake: input.brake, steer: input.steer, handbrake: true }
+    // surface grip: full on tarmac, reduced on the grass either side
+    const p = chassis.translation()
+    const surf = track.sample(p.x, p.z)
+    const grip = surf.onTrack
+      ? 1
+      : surf.distToCenter < track.halfWidth + 3
+        ? 0.72 // kerb / edge
+        : 0.34 // grass — noticeably slow & slidey
+    // heavy rolling resistance on the grass
+    chassis.setLinearDamping(surf.onTrack ? 0.15 : 1.1)
     applyVehicleControls(
       controller,
       chassis,
@@ -74,7 +87,7 @@ export function useRaycastVehicle(
       game.paused,
       stepState.current,
       world.timestep,
-      { tcs: game.assists.tcs },
+      { tcs: game.assists.tcs, grip },
     )
   })
 
