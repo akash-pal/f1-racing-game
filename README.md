@@ -36,4 +36,4 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 - **Car model:** "Formula 1 Car Midpoly" by LWDream — https://sketchfab.com/3d-models/formula-1-car-midpoly-ca91852b29bb435d8d0278d9131aa775 — licensed CC-BY-4.0. Served from `public/models/f1.glb`.
 - **Track asphalt:** "asphalt_track" from Poly Haven (CC0). Downscaled to 1K (diffuse / normal / roughness) in `public/textures/`.
 - **Environment lighting:** "Zwartkops Straight Morning" HDRI from Poly Haven (CC0). Downscaled to a 2K Radiance `.hdr` in `public/env/` and used for image-based lighting only (the visible sky is drei `<Sky>`).
-- **Engine audio:** "F-1raceCar-IdleAndRaceStartDemo" by Ears68 — https://freesound.org/people/Ears68/sounds/181187/ — licensed CC0. A field recording of a 2012 F1 V8; split into a short idle loop and an on-power loop (`public/audio/f1_idle.mp3`, `f1_onpower.mp3`, mono), crossfaded by throttle and pitched with revs at runtime by `useEngineSound`.
+- **Engine audio:** supplied by the project owner. Trimmed to a ~38 s loop and re-encoded to mono 128 kbps in `public/audio/engine.mp3`; looped and pitch-/level-modulated at runtime by `useEngineSound`.
