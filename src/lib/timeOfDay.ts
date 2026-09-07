@@ -20,6 +20,8 @@ export interface TodConfig {
   stars: boolean
   skyTurbidity: number
   skyRayleigh: number
+  /** how strongly the HDRI image-based lighting contributes at this time */
+  envIntensity: number
 }
 
 export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
@@ -29,15 +31,16 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#ffe0b8',
     sunIntensity: 2.5,
     ambientColor: '#a9bce6',
-    ambientIntensity: 0.55,
+    ambientIntensity: 0.248,
     hemiSky: '#e9d6bd',
     hemiGround: '#586044',
-    hemiIntensity: 1.0,
+    hemiIntensity: 0.4,
     fog: '#cfd8e0',
     background: '#c3cfdd',
     stars: false,
     skyTurbidity: 5,
     skyRayleigh: 1.7,
+    envIntensity: 0.55,
   },
   noon: {
     label: 'Noon',
@@ -45,15 +48,16 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#fff6e8',
     sunIntensity: 3.7,
     ambientColor: '#cfe0ff',
-    ambientIntensity: 0.85,
+    ambientIntensity: 0.383,
     hemiSky: '#dcecff',
     hemiGround: '#5a6540',
-    hemiIntensity: 1.3,
+    hemiIntensity: 0.52,
     fog: '#afc4e0',
     background: '#afc4e0',
     stars: false,
     skyTurbidity: 3,
     skyRayleigh: 1,
+    envIntensity: 0.7,
   },
   afternoon: {
     label: 'Afternoon',
@@ -61,15 +65,16 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#ffe6c4',
     sunIntensity: 2.8,
     ambientColor: '#c1cbe0',
-    ambientIntensity: 0.55,
+    ambientIntensity: 0.248,
     hemiSky: '#f0dcc0',
     hemiGround: '#55603d',
-    hemiIntensity: 0.95,
+    hemiIntensity: 0.38,
     fog: '#c2c3c0',
     background: '#bcc6cf',
     stars: false,
     skyTurbidity: 6,
     skyRayleigh: 1.6,
+    envIntensity: 0.6,
   },
   sunset: {
     label: 'Sunset',
@@ -77,15 +82,16 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#ff9050',
     sunIntensity: 2.2,
     ambientColor: '#7d6b9c',
-    ambientIntensity: 0.5,
+    ambientIntensity: 0.225,
     hemiSky: '#ff9d6a',
     hemiGround: '#33262a',
-    hemiIntensity: 0.85,
+    hemiIntensity: 0.34,
     fog: '#a8748a',
     background: '#8a5a72',
     stars: false,
     skyTurbidity: 10,
     skyRayleigh: 3,
+    envIntensity: 0.35,
   },
   night: {
     label: 'Night',
@@ -93,15 +99,16 @@ export const TIME_OF_DAY: Record<TimeOfDay, TodConfig> = {
     sunColor: '#9fb6e0',
     sunIntensity: 0.45,
     ambientColor: '#2a3350',
-    ambientIntensity: 0.24,
+    ambientIntensity: 0.108,
     hemiSky: '#20263c',
     hemiGround: '#0c0c14',
-    hemiIntensity: 0.4,
+    hemiIntensity: 0.16,
     fog: '#10131f',
     background: '#0a0c15',
     stars: true,
     skyTurbidity: 0.2,
     skyRayleigh: 0.4,
+    envIntensity: 0.12,
   },
 }
 

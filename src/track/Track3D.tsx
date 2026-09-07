@@ -68,7 +68,7 @@ export function Track3D() {
           color="#ffffff"
           roughness={1}
           metalness={0}
-          envMapIntensity={0.25}
+          envMapIntensity={0.4}
           normalScale={[0.6, 0.6]}
           side={DoubleSide}
         />

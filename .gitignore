@@ -30,3 +30,7 @@ formula_1_car_midpoly.glb
 *.blend1
 zwartkops_straight_morning_4k.exr
 *.exr
+
+# Poly Haven raw downloads
+poly/
+*.zip

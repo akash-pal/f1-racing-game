@@ -35,3 +35,4 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 
 - **Car model:** "Formula 1 Car Midpoly" by LWDream — https://sketchfab.com/3d-models/formula-1-car-midpoly-ca91852b29bb435d8d0278d9131aa775 — licensed CC-BY-4.0. Served from `public/models/f1.glb`.
 - **Track asphalt:** "asphalt_track" from Poly Haven (CC0). Downscaled to 1K (diffuse / normal / roughness) in `public/textures/`.
+- **Environment lighting:** "Zwartkops Straight Morning" HDRI from Poly Haven (CC0). Downscaled to a 2K Radiance `.hdr` in `public/env/` and used for image-based lighting only (the visible sky is drei `<Sky>`).

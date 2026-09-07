@@ -74,7 +74,7 @@ export function F1CarModel({ length = 6.6, opacity = 1 }: Props) {
           m.emissiveIntensity = 0
           m.metalness = 0
           m.roughness = 0.72
-          m.envMapIntensity = 0.15
+          m.envMapIntensity = 0.6
           m.side = DoubleSide
           m.userData.tuned = true
         }
