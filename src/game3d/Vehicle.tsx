@@ -1,11 +1,12 @@
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
-import { useEffect, useRef, type RefObject } from 'react'
-import { Vector3, Quaternion, type Group } from 'three'
-import { KMH_PER_MS, WHEEL_POSITIONS } from '../lib/constants'
+import { Suspense, useEffect, useRef, type RefObject } from 'react'
+import { Vector3, Quaternion } from 'three'
+import { KMH_PER_MS } from '../lib/constants'
 import { pseudoGear } from '../lib/pseudoGear'
 import { spawn3D, getCircuit } from '../track/circuit'
 import { F1Car } from '../car/F1Car'
+import { F1CarModel } from '../car/F1CarModel'
 import { ghostCommitLap, ghostRecordFrame, ghostStartRecording } from '../car/ghost'
 import { useLapTimer } from '../hooks/useLapTimer'
 import { raceGo } from '../hooks/useRaceControl'
@@ -26,29 +27,8 @@ const spawnQuat = new Quaternion()
 const SPAWN = spawn3D()
 const track = getCircuit()
 
-function Tyre({ radius }: { radius: number }) {
-  return (
-    <group rotation={[0, 0, Math.PI / 2]}>
-      <mesh castShadow>
-        <cylinderGeometry args={[radius, radius, 0.42, 22]} />
-        <meshStandardMaterial color="#141414" roughness={0.85} />
-      </mesh>
-      <mesh>
-        <cylinderGeometry args={[radius * 0.55, radius * 0.55, 0.44, 18]} />
-        <meshStandardMaterial color="#c9ccd2" metalness={0.7} roughness={0.35} />
-      </mesh>
-      <mesh position={[0, 0.22, 0]}>
-        <boxGeometry args={[0.06, 0.02, radius * 1.5]} />
-        <meshStandardMaterial color="#e0e0e0" />
-      </mesh>
-    </group>
-  )
-}
-
 export function Vehicle({ tuning, chassisRef }: Props) {
   const controllerRef = useRaycastVehicle(chassisRef, tuning)
-  const steerRefs = useRef<(Group | null)[]>([])
-  const rollRefs = useRef<(Group | null)[]>([])
   const hudAccum = useRef(0)
   const wasRacing = useRef(false)
   const recordClearAt = useRef(0)
@@ -93,22 +73,6 @@ export function Vehicle({ tuning, chassisRef }: Props) {
     if (!racing) {
       b.setLinvel({ x: 0, y: b.linvel().y, z: 0 }, true)
       b.setAngvel({ x: 0, y: 0, z: 0 }, true)
-    }
-
-    // wheel visuals
-    for (let i = 0; i < WHEEL_POSITIONS.length; i++) {
-      const steerGroup = steerRefs.current[i]
-      const rollGroup = rollRefs.current[i]
-      if (!steerGroup) continue
-      const conn = controller.wheelChassisConnectionPointCs(i)
-      const susp = controller.wheelSuspensionLength(i) ?? tuning.suspensionRestLength
-      steerGroup.position.set(
-        conn ? conn.x : WHEEL_POSITIONS[i][0],
-        (conn ? conn.y : WHEEL_POSITIONS[i][1]) - susp,
-        conn ? conn.z : WHEEL_POSITIONS[i][2],
-      )
-      steerGroup.rotation.y = controller.wheelSteering(i) ?? 0
-      if (rollGroup) rollGroup.rotation.x = controller.wheelRotation(i) ?? 0
     }
 
     // telemetry
@@ -172,8 +136,6 @@ export function Vehicle({ tuning, chassisRef }: Props) {
     }
   })
 
-  const rearRadius = tuning.wheelRadius * 1.05
-
   return (
     <RigidBody
       ref={chassisRef}
@@ -193,25 +155,9 @@ export function Vehicle({ tuning, chassisRef }: Props) {
         friction={0.7}
       />
 
-      <F1Car />
-
-      {WHEEL_POSITIONS.map((pos, i) => (
-        <group
-          key={i}
-          ref={(g) => {
-            steerRefs.current[i] = g
-          }}
-          position={pos}
-        >
-          <group
-            ref={(g) => {
-              rollRefs.current[i] = g
-            }}
-          >
-            <Tyre radius={i < 2 ? tuning.wheelRadius : rearRadius} />
-          </group>
-        </group>
-      ))}
+      <Suspense fallback={<F1Car />}>
+        <F1CarModel />
+      </Suspense>
     </RigidBody>
   )
 }

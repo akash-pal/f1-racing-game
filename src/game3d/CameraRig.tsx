@@ -17,10 +17,10 @@ interface Props {
   targetRef: RefObject<RapierRigidBody | null>
 }
 
-const CHASE_OFFSET = new Vector3(0, 3.4, 8.2)
+const CHASE_OFFSET = new Vector3(0, 3.3, 9.2)
 // driver's-eye height: just above the cockpit rim, roughly where a helmet sits
-const COCKPIT_OFFSET = new Vector3(0, 0.46, 0.15)
-const HOOD_OFFSET = new Vector3(0, 0.36, -1.15)
+const COCKPIT_OFFSET = new Vector3(0, 0.66, 0.35)
+const HOOD_OFFSET = new Vector3(0, 0.5, -2.9)
 
 const yawQ = new Quaternion()
 const fullQ = new Quaternion()
@@ -115,11 +115,11 @@ export function CameraRig({ targetRef }: Props) {
 
     // chase
     desired.copy(CHASE_OFFSET).applyQuaternion(yawQ).add(carPos)
-    if (desired.y < carPos.y + 1.4) desired.y = carPos.y + 1.4
+    if (desired.y < carPos.y + 1.1) desired.y = carPos.y + 1.1
     follow(cam, desired, 6, dt)
     fwd.set(0, 0, -1).applyQuaternion(yawQ)
     look.copy(carPos).addScaledVector(fwd, Math.min(speed * 0.12, 6))
-    look.y += 0.7
+    look.y += 0.35
     cam.lookAt(look)
     cam.fov = 64
     cam.updateProjectionMatrix()

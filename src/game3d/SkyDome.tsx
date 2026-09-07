@@ -1,4 +1,4 @@
-import { Sky, Stars } from '@react-three/drei'
+import { Environment, Lightformer, Sky, Stars } from '@react-three/drei'
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { DirectionalLight } from 'three'
@@ -46,6 +46,12 @@ export function SkyDome({ targetRef }: Props) {
       {cfg.stars && (
         <Stars radius={800} depth={120} count={2600} factor={6} saturation={0} fade speed={0.5} />
       )}
+
+      {/* procedural IBL so PBR surfaces have something to reflect (no HDR download) */}
+      <Environment resolution={48} frames={1}>
+        <Lightformer intensity={cfg.hemiIntensity * 1.6} color="#eef2f6" position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[30, 30, 1]} />
+        <Lightformer intensity={cfg.sunIntensity * 0.35} color={cfg.sunColor} position={[cfg.sun[0] * 0.02, 4, cfg.sun[2] * 0.02]} scale={[8, 8, 1]} />
+      </Environment>
 
       <hemisphereLight args={[cfg.hemiSky, cfg.hemiGround, cfg.hemiIntensity]} />
       <ambientLight color={cfg.ambientColor} intensity={cfg.ambientIntensity} />

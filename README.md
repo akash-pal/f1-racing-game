@@ -30,3 +30,8 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Asset credits
+
+- **Car model:** "Formula 1 Car Midpoly" by LWDream — https://sketchfab.com/3d-models/formula-1-car-midpoly-ca91852b29bb435d8d0278d9131aa775 — licensed CC-BY-4.0. Served from `public/models/f1.glb`.
+- **Track asphalt:** "asphalt_track" from Poly Haven (CC0). Downscaled to 1K (diffuse / normal / roughness) in `public/textures/`.

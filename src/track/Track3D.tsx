@@ -1,7 +1,14 @@
-import { Line } from '@react-three/drei'
+import { Line, useTexture } from '@react-three/drei'
 import { RigidBody } from '@react-three/rapier'
-import { useMemo } from 'react'
-import { DoubleSide, Vector3 } from 'three'
+import { useLayoutEffect, useMemo } from 'react'
+import {
+  DoubleSide,
+  LinearSRGBColorSpace,
+  RepeatWrapping,
+  SRGBColorSpace,
+  Vector3,
+  type Texture,
+} from 'three'
 import { getCircuit } from './circuit'
 import { buildKerbGeometries, buildRoadGeometry, buildWallGeometry } from './trackMesh'
 
@@ -14,6 +21,23 @@ const WALL_OFFSET = 1.4 // how far outside the painted edge the barrier sits
 
 export function Track3D() {
   const track = getCircuit()
+
+  // real asphalt (Poly Haven "asphalt_track", downscaled to 1K)
+  const asphalt = useTexture({
+    map: '/textures/asphalt_diff.jpg',
+    normalMap: '/textures/asphalt_nor.jpg',
+    roughnessMap: '/textures/asphalt_rough.jpg',
+  })
+  useLayoutEffect(() => {
+    for (const tex of Object.values(asphalt) as Texture[]) {
+      tex.wrapS = tex.wrapT = RepeatWrapping
+      tex.anisotropy = 8
+      tex.needsUpdate = true
+    }
+    asphalt.map.colorSpace = SRGBColorSpace
+    asphalt.normalMap.colorSpace = LinearSRGBColorSpace
+    asphalt.roughnessMap.colorSpace = LinearSRGBColorSpace
+  }, [asphalt])
 
   const road = useMemo(() => buildRoadGeometry(0.02), [])
   const [kerbA, kerbB] = useMemo(() => buildKerbGeometries(1.4), [])
@@ -39,7 +63,15 @@ export function Track3D() {
     <group>
       {/* tarmac */}
       <mesh geometry={road} receiveShadow>
-        <meshStandardMaterial color="#33373d" roughness={0.95} metalness={0} side={DoubleSide} />
+        <meshStandardMaterial
+          {...asphalt}
+          color="#ffffff"
+          roughness={1}
+          metalness={0}
+          envMapIntensity={0.25}
+          normalScale={[0.6, 0.6]}
+          side={DoubleSide}
+        />
       </mesh>
 
       {/* kerbs */}

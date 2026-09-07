@@ -6,8 +6,9 @@ import { getCircuit } from './circuit'
 
 /** Flat road ribbon between the left and right edges, lying at y = `y`. */
 export function buildRoadGeometry(y = 0.02): BufferGeometry {
-  const { leftEdge, rightEdge } = getCircuit()
+  const { leftEdge, rightEdge, length } = getCircuit()
   const n = leftEdge.length
+  const tilesAlong = length / 6 // ~6 m asphalt tile
   const positions = new Float32Array(n * 2 * 3)
   const normals = new Float32Array(n * 2 * 3)
   const uvs = new Float32Array(n * 2 * 2)
@@ -17,8 +18,10 @@ export function buildRoadGeometry(y = 0.02): BufferGeometry {
     positions.set([l.x, y, l.z], i * 6)
     positions.set([r.x, y, r.z], i * 6 + 3)
     normals.set([0, 1, 0, 0, 1, 0], i * 6)
-    const v = i / (n - 1)
-    uvs.set([0, v * 60, 1, v * 60], i * 4)
+    // u = 0..~2 across the ~14 m width, v tiled along the length so the asphalt
+    // reads roughly square
+    const v = (i / (n - 1)) * tilesAlong
+    uvs.set([0, v, 2, v], i * 4)
   }
   const indices: number[] = []
   for (let i = 0; i < n - 1; i++) {
