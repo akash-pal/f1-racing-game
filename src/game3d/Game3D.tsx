@@ -1,6 +1,6 @@
-import { Canvas } from '@react-three/fiber'
+import { advance, Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Suspense, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import type { RapierRigidBody } from '@react-three/rapier'
 import { PHYSICS_TIMESTEP } from '../lib/constants'
 import { useEngineSound } from '../hooks/useEngineSound'
@@ -26,6 +26,15 @@ export function Game3D() {
   const tuning = useVehicleTuning()
   useEngineSound()
   useHaptics()
+  // Dev-only: let an external script force a synchronous render tick
+  // (physics + camera + draw) via R3F's `advance`, bypassing the internal
+  // rAF loop — used to script a gameplay capture while the preview pane
+  // isn't visible (rAF is throttled/frozen then).
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      ;(window as unknown as Record<string, unknown>).__r3fAdvance = advance
+    }
+  }, [])
   const debugColliders = useGameStore((s) => s.debug.colliders)
   const racingLine = useGameStore((s) => s.assists.racingLine)
   const chassisRef = useRef<RapierRigidBody>(null)

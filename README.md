@@ -1,35 +1,66 @@
-# React + TypeScript + Vite
+# F1 Racing Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A browser-based F1 racing game built with React Three Fiber and real Rapier vehicle physics —
+a raycast car with suspension, tire slip and yaw damping, driving a hand-traced lap of the
+**Buddh International Circuit**, complete with rippled kerbs, grandstands, time-of-day lighting
+and gamepad haptics.
 
-Currently, two official plugins are available:
+![Gameplay](media/gameplay.gif)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+▶ [Watch the full-quality clip (mp4)](media/gameplay.mp4)
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Real vehicle physics** — Rapier's `DynamicRayCastVehicleController` (4-wheel suspension,
+  per-wheel friction/slip, handbrake-induced oversteer), tuned for a stable, controllable feel.
+- **A real circuit** — the Buddh International Circuit traced from its official map, with raised,
+  rippled kerbs the car physically feels going over them.
+- **Grandstands, scenery and 4 camera views** — chase, cockpit, hood and top-down, with
+  procedural F1-style grandstands kept clear of the track.
+- **Time of day** — Morning / Noon / Afternoon / Sunset / Night lighting via drei `<Sky>` and an
+  HDRI environment.
+- **Driving assists** — TCS (traction control), a racing-line overlay, and a best-lap ghost car.
+- **Gamepad support** — PS5 DualSense / Xbox / any "standard"-mapping controller, with analog
+  steering and throttle/brake triggers, plus haptic rumble for kerbs, slides and impacts.
+- **A 2D top-down prototype** — the earlier arcade-physics build, kept alongside the 3D game.
 
-## Expanding the Oxlint configuration
+## Controls
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+| Action | Keyboard | Gamepad |
+| --- | --- | --- |
+| Gas | `W` / `↑` | `R2` |
+| Brake | `S` / `↓` / `Space` | `L2` |
+| Steer | `A` / `D` | Left stick |
+| Handbrake | `Shift` | `✕` / `R1` |
+| Camera view | `C` | `▲` |
+| Time of day | `T` | — |
+| Racing line | `L` | — |
+| Ghost car | `G` | — |
+| TCS | `K` | — |
+| Sound | `M` | — |
+| Restart | `R` | `■` |
+| Pause | `P` | `Options` |
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Getting started
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Other scripts:
+
+```bash
+npm run build   # typecheck + production build
+npm test        # run the test suite (vitest)
+npm run lint     # oxlint
+```
+
+## Tech stack
+
+Vite · React 19 · TypeScript · [React Three Fiber](https://github.com/pmndrs/react-three-fiber) +
+[drei](https://github.com/pmndrs/drei) · [Rapier](https://rapier.rs/) via
+`@react-three/rapier` · Zustand · Vitest.
 
 ## Asset credits
 
