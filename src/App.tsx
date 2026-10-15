@@ -2,6 +2,7 @@ import { Leva } from 'leva'
 import { useState } from 'react'
 import { Hud } from './app/Hud'
 import { ModeSwitcher } from './app/ModeSwitcher'
+import { TouchControls } from './app/TouchControls'
 import { TimeOfDayPicker } from './app/TimeOfDayPicker'
 import { useKeyboardInput } from './hooks/useKeyboardInput'
 import { useRaceControl } from './hooks/useRaceControl'
@@ -29,7 +30,8 @@ export default function App() {
       <ModeSwitcher />
       <TimeOfDayPicker />
       <Hud />
-      <Leva collapsed hidden={mode !== '3d'} />
+      <TouchControls />
+      <Leva collapsed hidden={mode !== '3d' || window.matchMedia?.('(pointer: coarse)').matches} />
       <div className="overlay overlay--top-right">
         <button
           type="button"
@@ -49,6 +51,7 @@ export default function App() {
             <div>
               <kbd>C</kbd> camera · <kbd>T</kbd> time · <kbd>L</kbd> line · <kbd>G</kbd> ghost · <kbd>K</kbd> TCS · <kbd>M</kbd> sound · <kbd>R</kbd> restart · <kbd>P</kbd> pause
             </div>
+            <div>Touch: slide the left pad to steer · GAS / BRAKE on the right</div>
             <div>
               Gamepad: left stick steer · <kbd>R2</kbd> gas · <kbd>L2</kbd> brake · <kbd>✕</kbd>/<kbd>R1</kbd> handbrake · <kbd>▲</kbd> camera · <kbd>■</kbd> restart · <kbd>Options</kbd> pause
             </div>

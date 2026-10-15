@@ -376,3 +376,140 @@ kbd {
   border-radius: 4px;
   padding: 1px 5px;
 }
+
+/* --- touch controls (coarse-pointer devices) --- */
+.touch {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+  -webkit-touch-callout: none;
+}
+.touch button,
+.touch__pad {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  font: inherit;
+  color: #fff;
+}
+.touch__top {
+  position: absolute;
+  bottom: 16px;
+  left: calc(min(46vw, 340px) + 28px);
+  display: flex;
+  gap: 8px;
+}
+.touch__small {
+  width: 46px;
+  height: 46px;
+  font-size: 18px;
+  line-height: 1.05;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(14, 20, 32, 0.6);
+  backdrop-filter: blur(4px);
+}
+.touch__small:first-child {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.touch__small:active {
+  background: rgba(47, 111, 208, 0.8);
+}
+.touch__pad {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: min(46vw, 340px);
+  height: min(34vh, 150px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(14, 20, 32, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(4px);
+}
+.touch__arrow {
+  opacity: 0.55;
+  font-size: 22px;
+}
+.touch__knob {
+  position: absolute;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  transition: left 0.05s linear;
+  border-radius: 50%;
+  background: rgba(230, 193, 90, 0.85);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.touch__pedals {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.touch__pedal {
+  width: 84px;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+}
+.touch__pedal--gas {
+  height: min(34vh, 150px);
+  background: rgba(67, 214, 117, 0.45);
+}
+.touch__pedal--brake {
+  height: min(26vh, 110px);
+  background: rgba(232, 64, 46, 0.45);
+}
+.touch__pedal:active {
+  filter: brightness(1.5);
+}
+
+/* On touch devices the pedals/pad own the bottom corners: tuck the HUD above them */
+@media (pointer: coarse) {
+  .overlay--bottom-left {
+    bottom: auto;
+    top: 52px;
+    left: 8px;
+    transform: scale(0.7);
+    transform-origin: top left;
+  }
+  .overlay--bottom-right {
+    bottom: auto;
+    top: 52px;
+    right: 66px;
+    transform: scale(0.8);
+    transform-origin: top right;
+  }
+  .overlay--top-right {
+    top: 8px;
+    right: 8px;
+  }
+  .minimap,
+  .tod-picker,
+  #leva__root {
+    display: none !important;
+  }
+  .mode-switcher button {
+    font-size: 11px;
+    padding: 5px 7px;
+  }
+  .race-banner {
+    font-size: 30px;
+  }
+}

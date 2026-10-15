@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { KEY_MAP } from '../lib/constants'
 import { dampTowards } from '../lib/math'
+import { touchInput } from '../state/touchInput'
 import { useInputStore } from '../state/useInputStore'
 
 // Maps the keyboard AND a gamepad (PS5 DualSense / Xbox / any "standard"
@@ -12,6 +13,7 @@ import { useInputStore } from '../state/useInputStore'
 // - Gamepad: left stick X = steer, R2 = gas, L2 = brake, ✕ or R1 = handbrake.
 //   Whichever device you touch takes over; steering eases back to centre on
 //   release (light caster), it doesn't snap.
+// - Touch: on-screen pad/pedals (see app/TouchControls) write to state/touchInput.
 // - Contract: steer axis is +1 for RIGHT, -1 for LEFT (see constants STEER_SIGN).
 
 type Held = { fwd: boolean; back: boolean; left: boolean; right: boolean; handbrake: boolean }
@@ -106,9 +108,9 @@ export function useKeyboardInput(): void {
 
       // --- combine: gamepad and keyboard coexist, larger input wins ---
       const keySteer = (held.right ? 1 : 0) - (held.left ? 1 : 0)
-      const throttleTarget = Math.max(held.fwd ? 1 : 0, padThrottle)
-      const brakeTarget = Math.max(held.back ? 1 : 0, padBrake)
-      const handbrake = held.handbrake || padHandbrake
+      const throttleTarget = Math.max(held.fwd ? 1 : 0, padThrottle, touchInput.throttle ? 1 : 0)
+      const brakeTarget = Math.max(held.back ? 1 : 0, padBrake, touchInput.brake ? 1 : 0)
+      const handbrake = held.handbrake || padHandbrake || touchInput.handbrake
 
       // steering: keyboard key wins while held; else follow the stick; else ease
       // gently back to centre
@@ -117,6 +119,9 @@ export function useKeyboardInput(): void {
       if (keySteer !== 0) {
         steerTarget = keySteer
         steerRate = 11
+      } else if (Math.abs(touchInput.steer) > 0.02) {
+        steerTarget = touchInput.steer
+        steerRate = 14 // thumb position is already analog
       } else if (padSteering) {
         steerTarget = padSteer
         steerRate = 16 // the stick is already analog — track it fairly directly
