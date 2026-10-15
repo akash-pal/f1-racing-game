@@ -10,7 +10,7 @@ import { DoubleSide, Mesh, MeshStandardMaterial } from 'three'
 // (scale 1), measured once: X [-6.12, 4.78], Y [-0.82, 1.33], Z [-1.33, 2.76].
 // Wheels are baked into the body so they don't spin.
 
-const URL = '/models/f1.glb'
+const URL = `${import.meta.env.BASE_URL}models/f1.glb`
 useGLTF.preload(URL)
 
 // raw bounds at scale 1

@@ -7,7 +7,7 @@ import { RepeatWrapping, SRGBColorSpace } from 'three'
 // the road so there's no lip or shadow line at the track edge, plus a thick
 // collider so a fast car can't tunnel through if it leaves the island.
 export function Ground3D() {
-  const grass = useTexture('/textures/grass_diff.jpg')
+  const grass = useTexture(`${import.meta.env.BASE_URL}textures/grass_diff.jpg`)
 
   useLayoutEffect(() => {
     grass.wrapS = grass.wrapT = RepeatWrapping
