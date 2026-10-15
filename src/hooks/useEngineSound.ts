@@ -13,7 +13,7 @@ import { useLiveStore } from '../state/useLiveStore'
 // Browsers block audio until a gesture, so the graph is built on the first
 // key / pointer down (or when sound is switched on, which is itself a click).
 
-const SRC = '/audio/engine.mp3'
+const SRC = `${import.meta.env.BASE_URL}audio/engine.mp3`
 const IDLE_RPM = 3800
 const MAX_RPM = 15500
 

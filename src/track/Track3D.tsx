@@ -20,9 +20,9 @@ export function Track3D() {
 
   // real asphalt (Poly Haven "asphalt_track", downscaled to 1K)
   const asphalt = useTexture({
-    map: '/textures/asphalt_diff.jpg',
-    normalMap: '/textures/asphalt_nor.jpg',
-    roughnessMap: '/textures/asphalt_rough.jpg',
+    map: `${import.meta.env.BASE_URL}textures/asphalt_diff.jpg`,
+    normalMap: `${import.meta.env.BASE_URL}textures/asphalt_nor.jpg`,
+    roughnessMap: `${import.meta.env.BASE_URL}textures/asphalt_rough.jpg`,
   })
   useLayoutEffect(() => {
     for (const tex of Object.values(asphalt) as Texture[]) {
